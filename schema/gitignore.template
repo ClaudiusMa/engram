@@ -1,0 +1,30 @@
+# Privacy boundary: ignore every top-level path by default.
+# This prevents accidental publication of wiki pages, raw sources, URLs,
+# personal notes, logs, Obsidian settings, attachments, or ad hoc files.
+/*
+
+# Public repository structure.
+!/.gitignore
+!/README.md
+!/AGENTS.md
+!/LICENSE
+!/package.json
+
+# Public command-line initializer.
+!/bin/
+!/bin/**
+
+# Public schema templates only.
+# No personal knowledge, source URLs, source summaries, takes, sparks,
+# index entries, or logs should ever be placed here.
+!/schema/
+!/schema/**
+
+# Optional public GitHub metadata if added later.
+# Keep this only for issue templates, PR templates, or repo configuration.
+!.github/
+!.github/**
+
+# macOS Finder metadata. Re-excluded after the allowlists above so these never
+# slip into tracked folders like schema/ regardless of the !/schema/** rule.
+.DS_Store

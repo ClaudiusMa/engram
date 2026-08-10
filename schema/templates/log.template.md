@@ -7,6 +7,5 @@ Append-only chronological record.
 - Source:
 - Created:
 - Updated:
-- Contradictions or tensions:
 - Promoted:
 - Notes:

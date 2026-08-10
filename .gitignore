@@ -1,4 +1,3 @@
-
 # Privacy boundary: ignore every top-level path by default.
 # This prevents accidental publication of wiki pages, raw sources, URLs,
 # personal notes, logs, Obsidian settings, attachments, or ad hoc files.
@@ -7,7 +6,7 @@
 # Public repository structure.
 !/.gitignore
 !/README.md
-!/CLAUDE.md
+!/AGENTS.md
 !/LICENSE
 !/package.json
 
@@ -16,7 +15,7 @@
 !/bin/**
 
 # Public schema templates only.
-# No personal knowledge, source URLs, source summaries, takes,
+# No personal knowledge, source URLs, source summaries, takes, sparks,
 # index entries, or logs should ever be placed here.
 !/schema/
 !/schema/**
@@ -25,16 +24,6 @@
 # Keep this only for issue templates, PR templates, or repo configuration.
 !.github/
 !.github/**
-
-# Artifacts: downstream deliverables built FROM the wiki. They live inside PKS
-# so agents can read/write them locally (e.g. the artifact-sync workflow), but
-# their CONTENT is private knowledge and is never tracked here. Track only the
-# folder shell + its instructions; ignore every artifact project inside it.
-# (Each artifact is its own project/repo — ignoring the content also avoids
-# embedding their nested .git as a gitlink.)
-!/artifact/
-/artifact/*
-!/artifact/README.md
 
 # macOS Finder metadata. Re-excluded after the allowlists above so these never
 # slip into tracked folders like schema/ regardless of the !/schema/** rule.

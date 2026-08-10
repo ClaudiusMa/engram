@@ -4,7 +4,7 @@ A reusable structure for building a private, LLM-maintained knowledge system. Wo
 
 The core idea is that an LLM should not repeatedly rediscover your knowledge from raw files. Instead, it incrementally maintains a persistent wiki: source pages, concept pages, entity pages, position pages, question pages, an index, and a log. The wiki compounds over time.
 
-This repository contains the public structure only. Your actual knowledge stays private and will never get accessed by anyone else.
+This repository contains the public structure only. Your actual knowledge stays under the gitignored `wiki/` boundary and is never included in the public repository.
 
 ## Quick Start
 
@@ -44,16 +44,36 @@ The `.gitignore` uses a whitelist approach: ignore everything by default, then e
 
 ```text
 .
-├── CLAUDE.md
+├── AGENTS.md
 ├── README.md
 ├── LICENSE
 ├── .gitignore
 ├── package.json
+├── artifact/
+│   └── README.md
 ├── bin/
-│   └── personal-knowledge-system.mjs
+│   ├── personal-knowledge-base.mjs
+│   └── personal-knowledge-base.test.mjs
 └── schema/
+    ├── gitignore.template
+    ├── CHANGELOG.md
+    ├── agents/
+    │   └── apollo.md
+    ├── skills/
+    │   └── turn-doc-into-artifact/
+    │       ├── SKILL.md
+    │       ├── references/
+    │       │   └── artifact-contract.md
+    │       └── scripts/
+    │           └── validate-artifact.mjs
+    ├── obsidian/
+    │   ├── app.json
+    │   ├── graph.json
+    │   └── types.json
     ├── workflows/
-    │   └── artifact-sync.js
+    │   ├── artifact-sync.js
+    │   └── archive/
+    │       └── artifact-humanize-v1.js
     └── templates/
         ├── index.template.md
         ├── log.template.md
@@ -85,7 +105,7 @@ wiki/
 
 ## Page Types
 
-- `source`: an annotation layer for one ingested source. References the original file in `wiki/main/raw/` via the `file:` frontmatter and a `## Source` embed. Contains a factual `## What's in this source` index, the user's `## My take` (dated, updatable), and `## Sparks`. The original file is the source of truth; the source page never duplicates its content.
+- `source`: an annotation layer for one ingested source. References the original file in `wiki/main/raw/` via the `file:` frontmatter and a `## Source` embed. Contains a factual `## What's in this source` index and the user's optional, confirmed `## My take`. The original file is the source of truth; the source page never duplicates its content.
 - `note`: user-authored content — meeting notes, reading reactions, journals, scratch thoughts. The whole body is the user's voice. Lives at `wiki/main/notes/`.
 - `entity`: a concrete recurring thing
 - `concept`: a neutral idea, term, pattern, or framework
@@ -99,7 +119,7 @@ Position pages are intentionally separate from concept pages. Concepts describe 
 
 ### Ingest
 
-The LLM reads the private index, reads related pages, processes a new source, checks for contradictions with earlier takes and positions, creates or updates pages, updates the index, and appends the log.
+The LLM reads the private index and related pages, creates an annotation layer for the new source, discusses the source before recording the user's take, updates eligible pages, updates the index, and appends the log. Contradiction auditing remains a separate lint operation.
 
 ### Query
 
@@ -107,7 +127,11 @@ The LLM reads the private index first, then relevant pages, then answers from th
 
 ### Lint
 
-The LLM periodically checks for stale pages, missing links, contradictions, orphan pages, missing index entries, and takes or sparks that should be promoted.
+The LLM periodically checks for stale pages, missing links, contradictions, orphan pages, missing index entries, and confirmed takes that should be promoted.
+
+### Artifacts
+
+The PKS router sends requests to turn a complete research, analysis, or decision document into an artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. The portable skill builds a complete Agent view and a default Human view, follows the user's tone and the source's real sequence, and validates source coverage and restrained visual treatment before handoff.
 
 ## Direction
 
@@ -121,11 +145,11 @@ The long-term goal is a dedicated frontend for *reading* the wiki — built arou
 
 ## Frontend Platform Defaults
 
-The system works with any markdown-compatible frontend (Obsidian, Logseq, etc.). Frontend configuration is not part of the public schema — set it up however you prefer.
+The knowledge schema stays plain Markdown and can be read by any Markdown-compatible frontend. The initializer also ships conservative Obsidian defaults for link maintenance, graph filtering, and property types.
 
 The following structural paths should be excluded from your frontend's graph view, search, and navigation so they don't pollute the knowledge graph:
 
-- `CLAUDE.md`
+- `AGENTS.md`
 - `README.md`
 - `LICENSE`
 - `package.json`
@@ -138,9 +162,19 @@ Additionally, hiding `wiki/main/raw/` from graph view prevents duplicate nodes (
 
 ## Using This With an LLM Agent
 
-Point your LLM agent at the knowledge system directory and tell it to follow `CLAUDE.md`. The schema is intentionally plain markdown. No plugins, databases, vector search, or static-site tooling are required at the start.
+Point your LLM agent at the knowledge system directory and tell it to follow `AGENTS.md`. The schema is intentionally plain Markdown. No plugins, databases, vector search, or static-site tooling are required at the start.
 
 Start with one broad wiki. Add structure only when real friction appears.
+
+## Verify the Setup
+
+Run the dependency-free initializer smoke test after changing the public schema or setup logic:
+
+```sh
+npm test
+```
+
+The test creates a temporary vault, verifies required folders and Obsidian defaults, checks idempotency, and confirms private content remains ignored.
 
 ## License
 

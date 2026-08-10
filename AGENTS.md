@@ -1,8 +1,8 @@
-# CLAUDE.md
+# AGENTS.md
 
 This repo is an Obsidian vault and an open-source schema for a private LLM-maintained knowledge system.
 
-The public repo contains structure only: this file, `README.md`, `.gitignore`, `package.json`, `bin/`, and templates under `schema/`.
+The public repo contains structure only: this file, `README.md`, `LICENSE`, `.gitignore`, `package.json`, `bin/`, `schema/`, and the tracked `artifact/README.md` shell.
 The private wiki content lives under `wiki/` and is gitignored. Treat every source, URL, summary, take, index entry, and log entry as private knowledge.
 
 ## Core Rules
@@ -10,18 +10,20 @@ The private wiki content lives under `wiki/` and is gitignored. Treat every sour
 - Obsidian is the frontend. The LLM edits markdown files.
 - GitHub stores structure, not knowledge.
 - Use one wiki at launch: `wiki/main/`.
-- Use one root `CLAUDE.md` for all behavior.
+- Use one root `AGENTS.md` for all behavior.
 - Do not add tooling unless the user asks for it or repeated pain justifies it.
 - Before creating or editing any file, ask: structure or knowledge?
   - Structure: tracked.
   - Knowledge: gitignored.
 - Never ingest private content into tracked files.
-- `wiki/main/raw/` holds the original source files. These are the source of truth for every ingested source. The LLM reads them but never modifies or deletes them.
+- **`wiki/` writes are allowlist-only — every folder has exactly one authorized write path, and anything without a path is denied by default.** `raw/` receives originals the user drops in (Ingest/Clean); `sources/` pages are created only by the Ingest Workflow; `notes/` pages only by the Note Workflow filing content **the user authored** — the LLM never creates, expands, or backlinks a note on its own initiative; `concepts/`/`entities/`/`positions/`/`questions/`/`projects/` only through their page-creation thresholds and workflows. If a new page class is added later, it gets its own write path here; until then, content that fits no path does not go in `wiki/`.
+- **Agent-generated working products are not knowledge.** Plans, task breakdowns, PRD/spec/rubric drafts, research digests, and similar working material produced by or with agents never live in `wiki/` (filing them as notes would launder agent output into the user's voice at retrieval). They belong in `artifact/workshop/<project>/` — or stay in chat until the user names a home.
+- `wiki/main/raw/` holds the original source files. These are the source of truth for every ingested source. The LLM reads them but never modifies or deletes them — **except auto-generated transcripts (ASR meeting captures), which carry no authority and are cleaned on ingest (see [Cleaning auto-transcripts](#cleaning-auto-transcripts))**.
 - Source pages are annotation layers, not content copies. They reference the original file via the `file:` frontmatter field and a `## Source` embed. They never duplicate the file's content.
-- Do not produce LLM-generated prose summaries on source pages. The `## What's in this source` section is a factual index only — bullet points naming sections, entities, scope, format. The user's interpretation belongs in `## My take`, dated and updatable.
-- Never change the meaning of a user's `My take` content. This section is the user's voice. Allowed: silently auto-fix obvious typos and misspellings. Not allowed without explicit user approval: grammar changes, rephrasing, restructuring sentences, expanding, condensing, adding caveats, softening claims, inserting new ideas, or changing word choice.
-- For any edit to a take beyond a clear typo (e.g., grammar, punctuation that affects meaning, word choice), show the proposed diff and wait for explicit approval before writing.
-- If a take seems incomplete or unclear, surface a question to the user. Do not fill in the gap by editing.
+- Do not produce LLM-generated prose summaries on source pages. The `## What's in this source` section is a factual index only — bullet points naming sections, entities, scope, format. The user's interpretation belongs in `## My take`, dated and updatable. This holds even when the request is phrased in source terms ("digest this as a source", "add the distilled process to the source page"): the distillation goes to `artifact/workshop/<name>/` or stays in chat — name the boundary to the user instead of silently resolving it either way.
+- A user's `My take` (and note bodies) are the user's voice — preserve the **ideas and meaning, not the exact words**. **Allowed silently:** fix typos/misspellings, fix grammar, and lightly rephrase for readability. **Prohibited:** changing the meaning, inserting any idea/reasoning/analysis the user didn't express, expanding, adding caveats, or reframing a claim into something subtly different. Every idea in the take must be one the user actually said — tidy the wording freely, never add or alter an idea.
+- The common failure is sliding from "rephrase" into "add": a connective "because/as…", an explanatory clause, or a header asserting a framing the user didn't state. If a rephrase makes the take say *more* than the user said, you've crossed the line — pull it back. When unsure whether a rephrase preserves meaning, keep the user's words.
+- If a take seems incomplete or unclear, surface a question to the user; don't fill the gap by editing. If you think the take's *meaning* should change, don't — ask.
 
 ## Page Types
 
@@ -76,12 +78,15 @@ Every substantive user message falls into one of these categories. **Identify th
 | --- | --- | --- |
 | A new externally-authored file in `wiki/main/raw/` (PDF, formal doc, paper, brief), or explicit "ingest this source" | ingest | [Ingest Workflow](#ingest-workflow) |
 | A user-authored file or content drop (meeting notes, reading reaction, journal, scratch thought, self-written explainer) | note | [Note Workflow](#note-workflow) |
+| "Clean/tidy this transcript", or any ASR/auto-transcript on ingest | clean | [Cleaning auto-transcripts](#cleaning-auto-transcripts) (then Ingest or Note) |
 | "Connect/link project X" — point the system at a living repo or folder that lives outside the vault | connect-project | [Connect Project Workflow](#connect-project-workflow) |
 | Any question, advice request, planning, recommendation, opinion, or "what should I do" prompt | query | [Query Workflow](#query-workflow) |
 | "Lint the wiki" / "check for stale pages" / suggested every 10 ingests | lint | [Lint Workflow](#lint-workflow) |
+| "Recap this week" / "weekly recap" / "what did I do this week" | recap | [Recap Workflow](#recap-workflow) |
 | "Sync artifact X" / "update/refresh artifact X with new knowledge" | artifact-sync | [Artifact Sync Workflow](#artifact-sync-workflow) |
-| Session opens with any input | session-start | [Session Start](#session-start) (then routes to one of the above) |
-| Changes to CLAUDE.md, schema, templates, git/remote config, environment setup, or debugging the system itself | meta | No prescribed workflow — diagnose the problem, discuss the approach with the user, get explicit sign-off, then act. Do not edit files until aligned. |
+| "Turn this document/research/decision log into an artifact" / "make an artifact from X" | artifact | [Turn Document into Artifact Skill](#turn-document-into-artifact-skill) |
+| "Humanize artifact X" / "add a Human view to artifact X" / "make artifact X readable for people" | artifact | [Turn Document into Artifact Skill](#turn-document-into-artifact-skill) (humanize mode) |
+| Changes to AGENTS.md, schema, templates, workflows, agent harnesses, git/remote config, or debugging the system itself | meta | Operate as **[Apollo](schema/agents/apollo.md)**, the system-improvement role: debug → propose → align (explicit per-change sign-off) → apply → verify → record in [schema/CHANGELOG.md](schema/CHANGELOG.md). Do not edit files until aligned; never do the object-level work. |
 
 If a single message triggers multiple categories (e.g., a new file is in `raw/` AND the user asked a question about it), default to **ingest** first; the discussion within ingest covers the question. If genuinely ambiguous, ask the user which category before proceeding.
 
@@ -97,13 +102,21 @@ When a file lands in `raw/` and could be either, classify by signals. Proceed si
 | Voice | third-person, citations, formal | first-person, "I think", "we discussed" |
 | Structure | TOC, page numbers, formal sections | bullets, quote+reaction, scratch |
 
-### Session Start
+#### Cleaning auto-transcripts
 
-When the user opens a session and gives any input — including a single word, a file mention, or just "go" — first list `wiki/main/raw/`. For any file there that is not referenced by any existing source page's `file:` frontmatter, treat it as a pending ingest. Surface the list to the user and ask which they want to process. If only one is pending, begin the Ingest Workflow immediately and confirm what you're doing. If none are pending, route the user's message into the matching workflow above.
+An ASR / auto-captured transcript is machine output with **no authority** — its garbling isn't worth preserving. On ingest, **clean it in place** (this is "clean," distinct from the wiki [Lint Workflow](#lint-workflow), which audits structure, not content):
+
+- **Sidecar first, always:** before touching the file, copy the untouched original to `<name>.orig.md`. A clean with no sidecar is invalid — cleaning is the one operation that rewrites a raw file, and the sidecar is what makes it non-destructive. The cleaned transcript becomes the readable raw file.
+- Deletion is category-bounded: greetings, small talk, dead air, ads/sponsor breaks, music cues, duplicated timestamps, filler, false starts, and verbatim repeats. Everything else stays sentence-for-sentence — **never paraphrase, compress, merge, or reorder the substance**. Readability comes from removing noise and adding speaker labels, not from rewriting.
+- Correct ASR errors against known PKS entity names (`wad`→WOD, `judger`→Judgr); flag low-confidence corrections inline — *(ASR — confirm)* — never assert them as fact.
+- **Verify before saving:** report original → cleaned word counts in the log entry. Reduction beyond ~25% is condensation, not cleaning — stop and show the user what would be dropped before writing.
+- **Transcripts only** — authored sources (PDFs, papers, formal docs) keep the strict never-modify-raw rule.
 
 ### Ingest Workflow
 
 When ingesting a source:
+
+When the user signals new material for ingestion, check `wiki/main/raw/` for pending files before ingesting. Any file there that is not referenced by an existing source page's `file:` frontmatter is pending. If the user has not identified a file, surface the pending list and ask which one to process; if only one is pending, begin with that file and confirm what you're doing.
 
 1. Read `wiki/main/index.md` first.
 2. Read related pages suggested by the index.
@@ -115,7 +128,7 @@ When ingesting a source:
    - Add a `## Source` section with `![[../raw/<filename>]]` so the original is embedded/linked from the source page.
    - Populate `## What's in this source` with factual bullets only (sections covered, entities mentioned, scope, format).
    - Do not embed the file's content. Do not delete the file.
-7. **Discuss the source with the user before capturing `My take`.** After the source page is written, ask 1–3 specific, open questions drawn from the source — what stood out, what to push back on, what feels useful, where it overlaps with the user's existing thinking. Don't ask for a monolithic "take" upfront. Let the conversation move; follow up where the user shows interest. When the user articulates a view, mirror it back as a proposed `My take` ("so your take is X — should I write that down?") and only write on confirmation. Capture verbatim with typo-level cleanup only (per the take-protection rule in Core Rules). If the user has no view or wants to skip, leave `_None yet._`. **The discussion is the point; the take is a byproduct.**
+7. **Discuss the source with the user before capturing `My take`.** After the source page is written, ask 1–3 specific, open questions drawn from the source — what stood out, what to push back on, what feels useful, where it overlaps with the user's existing thinking. Don't ask for a monolithic "take" upfront. Let the conversation move; follow up where the user shows interest. When the user articulates a view, mirror it back as a proposed `My take` ("so your take is X — should I write that down?") and only write on confirmation. Capture in the user's voice — fix typos/grammar and lightly rephrase for readability, but never add ideas or change meaning (per the take-protection rule in Core Rules). If the user has no view or wants to skip, leave `_None yet._`. **The discussion is the point; the take is a byproduct.**
 8. Update relevant entity, concept, position, question, and project pages.
 9. Promote a take only if it has grown beyond one source.
 10. Update `index.md`.
@@ -140,7 +153,7 @@ A source page must contain these headings:
 ## Source
 ```
 
-(`## Related pages` and `## Source notes` may also appear but are not required.)
+(`## Related pages` and `## Source notes` may also appear but are not required. **No other `##` section may appear on a source page** — content that doesn't fit these five headings doesn't belong on the page.)
 
 `What's in this source` is a factual index of the source, not a synthesis. Bullet points naming sections, entities, scope, and format. No prose interpretation — that belongs in `## My take`.
 
@@ -174,7 +187,7 @@ For user-authored content (meeting notes, reading reactions, journals, scratch t
 5. **Link to existing pages.** Identify entities, concepts, sources named in the note. Use `[[wikilinks]]` inline and in `related:`. Apply the same page creation thresholds as Ingest — do not auto-create new entity pages from a single mention in a single note.
 6. **Update `index.md`** under a separate `## Notes` table (alongside `## Sources`).
 7. **Append `log.md`** with a one-line entry: `## [YYYY-MM-DD] note | <Title>`.
-8. No discussion phase. No `## My take` section. **The take-protection rule (Core Rules) applies to the entire body** — typo fixes only, never alter meaning.
+8. No discussion phase. No `## My take` section. **The take-protection rule (Core Rules) applies to the entire body** — fix typos/grammar and lightly rephrase, but never add ideas or alter meaning.
 
 Notes are equal-weight with sources during retrieval. The Query Workflow does not deprioritize them. The difference between source and note is **provenance**, not **importance**.
 
@@ -215,7 +228,7 @@ Follow this sequence before answering. **Do not answer from prior knowledge alon
 3. **Read that one source page in full.** The page body holds the substantive content — user stories, named directions, decisions, evidence, in-scope/out-of-scope — that the index summary collapses. Only read additional pages if the question genuinely spans multiple sources (comparison, cross-source synthesis). If a relevant `project` page surfaces and the question needs the project's *current* state — not just your recorded notes about it — follow its `path:` and read or grep the actual files to ground the answer in what's there now. Stay within the entry points named in `## What's worth reading`; read-only, never modify.
 4. **Answer from the wiki.** Ground every specific suggestion, claim, or recommendation in a cited passage. **Do not extrapolate.** If a suggestion can't trace to a wiki page, drop it — do not pad to a "feels right" answer shape (e.g., do not produce three options when only two are grounded). **Tag citations by provenance** — `[[Page Name]] (source)` for source pages, `[[Page Name]] (note)` for notes, and `[[Page Name]] (project)` for project pages (add `, live` when you read the project's current files, e.g. `[[fraud-platform]] (project, live)`) — so the user can see the weight of the grounding at a glance.
 5. If the wiki genuinely doesn't cover what's needed, ask clarifying questions — and explicitly name what you checked first (e.g., "I read `index.md` and the internship brief in full, but neither covers X").
-6. If the answer creates durable synthesis, offer to file it as a concept, position, or question page. Do not file without approval.
+6. If the answer creates durable synthesis, offer to file it as a concept, position, or question page. Do not file without approval — and those are the **only** wiki classes query output may become (`wiki/` is allowlist-only, per Core Rules). Working products the user asks for (plans, breakdowns, drafts) go to `artifact/workshop/<project>/`, not `wiki/`.
 
 ### Lint Workflow
 
@@ -234,34 +247,43 @@ Check for:
 - filename or link drift
 - project pages whose `path:` or `repo:` no longer resolves, or whose `## What's worth reading` has drifted from the project's current structure
 
+### Recap Workflow
+
+A recap is a personal weekly record built from the wiki — what was learned, what changed, and what's ahead. It is written for the user's own review, not an external audience: no background re-explanation, no stakeholder scorecards or satisfaction estimates, no framing for a reader who wasn't there.
+
+1. **Determine the window.** List `artifact/recap/` for the most recent `<YYYY>-w<WW>` folder; the window starts the day after that week's end. If no recap exists yet, ask the user for a start date. The window ends today. Name the new folder by the ISO week of the window's end date, zero-padded (`2026-w05`, `2026-w28`).
+2. **Determine scope.** If the user names a project or thread, narrow to it. Otherwise cover everything new in the wiki in the window.
+3. **Retrieve.** Read `wiki/main/index.md`, then collect every `wiki/main/log.md` entry dated in the window — sweep to today, don't stop early. Read every page those entries touch (sources, notes, concepts, entities, positions, questions) in full, including in-window updates to older pages.
+4. **Extract**, in this order, skipping any section with nothing in-window:
+   - **The week** — a 3–5 sentence arc per thread: where it stood, what moved, what got corrected, where it stands now. Pure synthesis of the sections below — no claims that aren't cited there.
+   - **What happened** — dated milestones, one line each. The user's work only; skip vault housekeeping (`log.md` already records it).
+   - **What changed** — decisions, corrections, and direction shifts, with whom, why, and what each superseded (corrections count; show lineage). Feedback that changed something belongs here, attached to the change it produced; unresolved friction goes under What's ahead.
+   - **What was learned** — only learnings new this week, each tagged **domain** or **craft**; skip anything already established in prior recaps.
+   - **What's ahead** — open questions opened or materially advanced this week (one status line each), then next steps explicitly stated in in-window pages — never invented. From the second recap on, open with a check of the prior week's next steps: done / carried / dropped.
+5. **Provenance discipline** (same bar as Query): every claim cites its wiki page; the user's views come only from confirmed `## My take` sections and notes they authored — never from a raw transcript, never from a take marked pending (flag those instead). Drop any claim that can't be cited. Mechanics, not operational data — no case IDs or raw fraud volumes unless load-bearing for a decision.
+6. **Build `artifact/recap/<YYYY-wWW>/index.html` via a Sonnet subagent** — extraction is the main session's judgment; the page-making is delegated. Write the extracted, cited content to a scratch file, then launch an Agent (`model: sonnet`) whose prompt names that file, the target path, and the brand guide (`artifact/_brand/design.md`; dark via `design.dark.md` / `prefers-color-scheme`), plus `artifact/recap/AGENTS.md` for series conventions. It renders one self-contained static HTML page, no build step, logo referenced at `../branding/logo.svg`; from the second recap on, also point it at the prior week's page as the visual pattern to match. Verify the rendered result in a preview before reporting. First run only, at the `recap/` level (not per week): `AGENTS.md` with the Brand section from `artifact/_brand/BUILD-INSTRUCTIONS.md`, and `branding/logo.svg` → symlink to `../_brand/logo.svg`.
+7. **Report back:** file written, per-section counts, claims dropped for lack of grounding, pending takes flagged, and `git status` confirming nothing under `wiki/` or `artifact/` became tracked.
+
 ### Artifact Sync Workflow
 
-When the user asks to sync/update/refresh an **artifact** with current PKS knowledge, run the dynamic workflow at `schema/workflows/artifact-sync.js` — do not do this reconciliation by hand in one context.
+When the user asks to sync/update/refresh an **artifact** with current PKS knowledge, run the dynamic workflow at `schema/workflows/artifact-sync.js`. **The script is the source of truth for its own mechanism** (stages, agent fan-out, cost, the `adds` materiality bar) — don't restate it here, and don't reconcile by hand in one context.
 
-Artifacts are downstream deliverables built FROM the wiki (e.g. a shareable one-pager under `artifact/<name>/`). **The artifact's `index.html` is its source of truth** (for that artifact, not the system); some artifacts also carry a populated HAI-Harness `Human/` layer whose entries cite PKS pages via `Source:` lines. The workflow reconciles PKS knowledge **added since the last sync** against the artifact's claims surfaces — `index.html` primary, populated `Human/` as supplement — incremental, not a full re-scan:
+What it does: reconciles PKS knowledge **added since the last sync** against the artifact's claims surfaces (`index.html` primary; a populated HAI-Harness `Human/` layer as supplement). It **proposes, never applies** — writes exactly one dated report `<artifact>/Human/knowledge-sync-<date>.md` (creating `Human/` if needed), and never touches the canonical `Human/` files, `Agents/`, or the deliverable. If an artifact has neither an `index.html` nor a populated `Human/`, it stops without a report.
 
-- **Scope** (1 Sonnet agent, cheap) — grep-first log read (entry headings only, then just the selected increments by line range; never the whole log outside backfill); watermark + **cumulative** page ledger from the latest prior report only; detects which claims surfaces exist; gates by `mode`.
-- **Small delta (≤4 pages — the routine path)** — ONE Sonnet agent reads the claims surfaces + the pages, classifies promotes / resolves / contradicts / drift / adds, self-checks everything (including adversarial self-refute on contradicts/drift), and writes the report. Two agents total.
-- **Large delta / backfill** — **Claims** (1 agent: surfaces → compact claims index) → **Reconcile** (batched ~4 pages/agent, claims passed in) → **Verify** (one agent per page with contradicts/drift; adversarially refute those only) → **Synthesize** (write ONE dated report `<artifact>/Human/knowledge-sync-<date>.md`). All Sonnet.
-
-Relevance is filtered at both ends: Scope skips unrelated increments wholesale, and `adds` must clear a **materiality bar** — the artifact is curated, not a wiki mirror, so an add must fill a gap the artifact's own structure implies or strengthen/update a core claim (topical adjacency is not enough), and carries a `whyMaterial` line. Near-misses surface as one-line entries under "Noted, not proposed" in the report, never as full proposals.
-
-If an artifact has no (or an empty) `Human/` folder, the report still lands at `Human/knowledge-sync-<date>.md` — the folder is created on demand as the proposal inbox. If an artifact has neither an `index.html` nor a populated `Human/`, the run stops without a report (no claims surface to reconcile against).
-
-**Dispatch (before launching):** if a prior `knowledge-sync-*.md` exists, pass `mode: incremental`. If none exists, **ask the user latest-delta vs full-backfill** and pass `mode: latest` or `mode: backfill`. To target a specific change, pass `preselectedPages: [{path,title}]` instead of a mode.
-
-Invoke with the `Workflow` tool:
+**Dispatch (before launching):** if a prior `knowledge-sync-*.md` exists, pass `mode: incremental`; if none, **ask the user latest-delta vs full-backfill** and pass `mode: latest|backfill`; to target a specific change, pass `preselectedPages: [{path,title}]`.
 
 ```
-Workflow({
-  scriptPath: "<pksRoot>/schema/workflows/artifact-sync.js",
-  args: { pksRoot: "<abs repo root>", artifactPath: "artifact/<name>", today: "<YYYY-MM-DD>", mode: "incremental" }
-})
+Workflow({ scriptPath: "<pksRoot>/schema/workflows/artifact-sync.js",
+  args: { pksRoot: "<abs repo root>", artifactPath: "artifact/<name>", today: "<YYYY-MM-DD>", mode: "incremental" } })
 ```
 
-Cost: routine `incremental` runs are ~20-40k tokens (1-3 new pages, two agents); a one-time `backfill` is ~150-350k. Everything runs on Sonnet.
+### Turn Document into Artifact Skill
 
-Strict boundary: the workflow **proposes, never applies**. It writes exactly one report file into the artifact's `Human/` (creating the folder if needed); it never edits the canonical `Human/` files, `Agents/`, or the deliverable. After the human folds the report in — `index.html` via the artifact's own agent/session, `Human/` files directly — the deliverable is rebuilt/redeployed separately. PKS only ever writes inside the artifact's `Human/` folder.
+When the user asks to turn a complete research, analysis, product-decision, review, or other finished document into an artifact, read and follow `schema/skills/turn-doc-into-artifact/SKILL.md` completely. The skill is the source of truth for the build sequence, two-view contract, user-tone rules, restrained visual language, and validation gates.
+
+The skill builds a faithful, complete **Agent** view first, then a default **Human** view whose sections follow the source's real jobs and sequence. It never forces the story into a fixed number of beats. Use its **humanize mode** for an existing artifact with a discoverable authoritative source; preserve the Agent view and replace only the Human-owned surface and shared switch.
+
+The skill lives inside PKS so every agent entering through this `AGENTS.md` router uses the same instructions. Do not install or fork product-specific copies. The retired 2–3-beat Humanizer remains only at `schema/workflows/archive/artifact-humanize-v1.js` as history and must not receive new work.
 
 ## Promotion Rules
 

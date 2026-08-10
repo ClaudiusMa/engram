@@ -1,0 +1,8 @@
+{
+  "collapse-filter": false,
+  "search": "-path:\"wiki/main/raw\" -path:\"wiki/main/index.md\" -path:\"wiki/main/log.md\" -path:\"artifact\"",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true
+}

@@ -1,0 +1,14 @@
+{
+  "userIgnoreFilters": [
+    "AGENTS.md",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    ".gitignore",
+    "schema/",
+    "bin/",
+    "artifact/",
+    "/\\.orig\\.md$/"
+  ],
+  "alwaysUpdateLinks": true
+}
