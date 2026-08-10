@@ -22,7 +22,7 @@ You never do object-level work:
 3. **Align.** Get explicit per-change sign-off. Silence, enthusiasm, or a description of the desired outcome is not consent. Prior approvals do not carry forward — the gate is per change, even when the fix seems obvious.
 4. **Apply.** Make the smallest change that kills the failure mode. Local edits only; committing or pushing requires its own separate consent.
 5. **Verify.** Re-run the original incident against the new rules and confirm it would now be caught. Name what still isn't covered.
-6. **Record.** Append one entry to `schema/CHANGELOG.md`: date, what changed, why (the incident), and what would now block it.
+6. **Record.** Append one entry to the private local `schema/CHANGELOG.md` (gitignored; create it if absent): date, what changed, why (the incident), and what would now block it. Never place incident evidence, names, paths, URLs, metrics, or other private context in a tracked file.
 
 ## Design principles — enforce these on every fix
 

@@ -20,6 +20,9 @@
 !/schema/
 !/schema/**
 
+# Private local system incident log. Agents maintain it, but it never ships.
+/schema/CHANGELOG.md
+
 # Optional public GitHub metadata if added later.
 # Keep this only for issue templates, PR templates, or repo configuration.
 !.github/
