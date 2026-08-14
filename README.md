@@ -1,6 +1,6 @@
-# Personal Knowledge System
+# Engram
 
-A reusable structure for building a private, LLM-maintained knowledge system. Works with any markdown-compatible frontend platform.
+A private, LLM-maintained knowledge system with a reusable public structure. Works with any Markdown-compatible frontend platform.
 
 The core idea is that an LLM should not repeatedly rediscover your knowledge from raw files. Instead, it incrementally maintains a persistent wiki: source pages, concept pages, entity pages, position pages, question pages, an index, and a log. The wiki compounds over time.
 
@@ -11,7 +11,7 @@ This repository contains the public structure only. Your actual knowledge stays 
 Create or `cd` into the folder you want to use as your knowledge system, then run:
 
 ```sh
-npx github:ClaudiusMa/Personal-Knowledge-System init
+npx github:ClaudiusMa/engram init
 ```
 
 ## Privacy Model
@@ -111,7 +111,7 @@ wiki/
 - `concept`: a neutral idea, term, pattern, or framework
 - `position`: a personal claim or sustained view
 - `question`: an unresolved question being tracked
-- `project`: a pointer to a living, externally-owned repo or folder *outside* the vault. The LLM reads its current state at query time to draw context from work that didn't originate in PKS — but never copies it in or modifies it.
+- `project`: a pointer to a living, externally-owned repo or folder *outside* the vault. The LLM reads its current state at query time to draw context from work that didn't originate in Engram — but never copies it in or modifies it.
 
 Position pages are intentionally separate from concept pages. Concepts describe ideas. Positions capture what the owner currently believes about those ideas.
 
@@ -131,7 +131,7 @@ The LLM periodically checks for stale pages, missing links, contradictions, orph
 
 ### Artifacts
 
-The PKS router sends requests to turn a complete research, analysis, or decision document into an artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. The portable skill builds a complete Agent view and a default Human view, follows the user's tone and the source's real sequence, and validates source coverage and restrained visual treatment before handoff.
+The Engram router sends requests to turn a complete research, analysis, or decision document into an artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. The portable skill builds a complete Agent view and a default Human view, follows the user's tone and the source's real sequence, and validates source coverage and restrained visual treatment before handoff.
 
 ## Direction
 
