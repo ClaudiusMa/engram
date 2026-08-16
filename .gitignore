@@ -10,6 +10,10 @@
 !/LICENSE
 !/package.json
 
+# Public README illustration.
+!/assets/
+!/assets/engram-overview.png
+
 # Public command-line initializer.
 !/bin/
 !/bin/**

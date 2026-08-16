@@ -4,6 +4,8 @@ A private, LLM-maintained knowledge system with a reusable public structure. Wor
 
 The core idea is that an LLM should not repeatedly rediscover your knowledge from raw files. Instead, it incrementally maintains a persistent wiki: source pages, concept pages, entity pages, position pages, question pages, an index, and a log. The wiki compounds over time.
 
+![Engram as a personal knowledge system](assets/engram-overview.png)
+
 This repository contains the public structure only. Your actual knowledge stays under the gitignored `wiki/` boundary and is never included in the public repository.
 
 ## Quick Start
