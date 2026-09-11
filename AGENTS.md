@@ -1,9 +1,15 @@
 # AGENTS.md
 
-This repo is an Obsidian vault and an open-source schema for a private LLM-maintained knowledge system.
+This repo is Engram: an Obsidian vault and an open-source schema for a private LLM-maintained knowledge system.
 
 The public repo contains structure only: this file, `README.md`, `LICENSE`, `.gitignore`, `package.json`, `bin/`, `schema/`, and the tracked `artifact/README.md` shell.
 The private wiki content lives under `wiki/` and is gitignored. Treat every source, URL, summary, take, index entry, and log entry as private knowledge.
+
+## Canonical Name
+
+- The system's canonical public name is **Engram**.
+- When the user says or dictates **ngram** while referring to this system, interpret it as Engram. Preserve the standard technical meaning of **n-gram** when the context is language modeling or text analysis.
+- `PKS`, `personal-knowledge-base`, and `personal-knowledge-system` are permitted internal implementation identifiers. Engram is the display name; do not rename paths, protocol keys, migration records, CLI filenames, or compatibility entry points solely for branding.
 
 ## Core Rules
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-// Personal Knowledge System — CLI initializer
-// Usage: npx github:ClaudiusMa/Personal-Knowledge-System init
+// Engram — legacy CLI initializer
+// Usage: npx github:ClaudiusMa/engram init
 //
 // Scaffolds the wiki directory structure, seeds index.md and log.md from
 // templates, copies CLAUDE.md, schema/, and .gitignore into the current
@@ -67,11 +67,11 @@ function seedDir(srcDir, destDir) {
 // ---------------------------------------------------------------------------
 
 function init() {
-  console.log('\n  Personal Knowledge System — init\n');
+  console.log('\n  Engram — init\n');
 
   // Guard: don't init inside the repo itself
   if (resolve(TARGET) === resolve(PKG_ROOT)) {
-    console.log('  ⚠  You are inside the PKS repo itself.');
+    console.log('  ⚠  You are inside the Engram repo itself.');
     console.log('     cd into (or create) the folder you want as your knowledge system,');
     console.log('     then re-run this command.\n');
     process.exit(1);
@@ -156,9 +156,9 @@ const command = process.argv[2];
 if (command === 'init') {
   init();
 } else {
-  console.log('\n  Personal Knowledge System\n');
+  console.log('\n  Engram\n');
   console.log('  Usage:');
-  console.log('    npx github:ClaudiusMa/Personal-Knowledge-System init\n');
+  console.log('    npx github:ClaudiusMa/engram init\n');
   console.log('  Commands:');
   console.log('    init    Scaffold wiki structure and seed templates\n');
   if (command) {

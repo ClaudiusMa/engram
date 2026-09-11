@@ -10,15 +10,15 @@ import { fileURLToPath } from "node:url";
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let displayRoot = process.cwd();
 
-const usage = `personal-knowledge-base
+const usage = `engram
 
 Usage:
-  personal-knowledge-base init <target-dir>
-  personal-knowledge-base <target-dir>
+  engram init <target-dir>
+  engram <target-dir>
 
 Examples:
-  npx github:ClaudiusMa/personal-knowledge-base init ~/Personal-Knowledge-Base
-  npx github:ClaudiusMa/personal-knowledge-base init .
+  npx github:ClaudiusMa/engram init ~/Engram
+  npx github:ClaudiusMa/engram init .
 `;
 
 const args = process.argv.slice(2);
@@ -109,7 +109,7 @@ async function initializeVault(destination) {
     skipped.push(".git/");
   }
 
-  console.log(`Initialized personal knowledge base at ${destination}`);
+  console.log(`Initialized Engram at ${destination}`);
   printList("Created", created);
   printList("Skipped existing", skipped);
   console.log("");

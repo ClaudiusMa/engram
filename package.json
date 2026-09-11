@@ -1,9 +1,10 @@
 {
-  "name": "personal-knowledge-base",
+  "name": "@claudiusma/engram",
   "version": "0.1.0",
-  "description": "A reusable structure for a private, LLM-maintained knowledge system.",
+  "description": "Engram: a reusable structure for a private, LLM-maintained knowledge system.",
   "type": "module",
   "bin": {
+    "engram": "./bin/personal-knowledge-base.mjs",
     "personal-knowledge-base": "./bin/personal-knowledge-base.mjs"
   },
   "files": [
