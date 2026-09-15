@@ -9,3 +9,5 @@ Append-only chronological record.
 - Updated:
 - Promoted:
 - Notes:
+
+Other operation headings include `query`, `lint`, `connect`, and `human-skill`.

@@ -1,0 +1,14 @@
+# Query Workflow
+
+> This routed procedure is extracted from the root contract. Load it only for this route; repository-relative paths are relative to the Engram root.
+
+Follow this sequence before answering. **Do not answer from prior knowledge alone, and do not ask clarifying questions until you have completed steps 1–3.**
+
+1. **Extract key concepts, keywords, and entities from the query.** Restate the user's question in your thinking and list the 2–5 concepts/keywords/entities it touches. This commits you to a frame before retrieval.
+2. **Scan `wiki/main/index.md`** (and `wiki/main/log.md` if the question is time-anchored or about past decisions) for the page whose summary best matches the extracted concepts. Do not follow the human-skills registry pointer or load human-skill pages from an ordinary query; they are available only through the Human Skill Workflow's intent gate.
+3. **Read that one source page in full.** The page body holds the substantive content — user stories, named directions, decisions, evidence, in-scope/out-of-scope — that the index summary collapses. Only read additional pages if the question genuinely spans multiple sources (comparison, cross-source synthesis). Existing project annotations are recorded knowledge, not permission to follow their paths. Only read a live external project when the user explicitly requests that access; use the optional ProductLab workflow for ProductLab resolution. Otherwise answer from the wiki and label recorded project information accordingly.
+4. **Answer from the wiki.** Ground every specific suggestion, claim, or recommendation in a cited passage. **Do not extrapolate.** If a suggestion can't trace to a wiki page, drop it — do not pad to a "feels right" answer shape (e.g., do not produce three options when only two are grounded). **Tag citations by provenance** — `[[Page Name]] (source)` for source pages, `[[Page Name]] (note)` for notes, and `[[Page Name]] (project)` for project pages (add `, live` when you read the project's current files, e.g. `[[example-project]] (project, live)`) — so the user can see the weight of the grounding at a glance.
+5. If the wiki genuinely doesn't cover what's needed, ask clarifying questions — and explicitly name what you checked first (e.g., "I read `index.md` and the relevant source page in full, but neither covers X").
+6. If the answer creates durable synthesis, offer to file it as a concept, position, or question page. Do not file without approval — and those are the **only** wiki classes query output may become (`wiki/` is allowlist-only, per Core Rules). Working products the user asks for (plans, breakdowns, drafts) go directly to `artifact/`. Do not initiate ProductLab ownership checks or migration.
+
+If the user approves filing a synthesis, read the relevant conventions and thresholds in [shared page rules](page-rules.md) before writing.

@@ -20,6 +20,8 @@ The **Agent view** is complete. Preserve all substantive source sections in orde
 
 The **Human view** is focused but not artificially compressed. Its structure follows the real source stages. Each stage should read as a short narrative: the user needs to accomplish something; the current experience creates a gap; the decision removes that gap in the smallest supported way; the grounded rationale and anything still open follow only when needed.
 
+Every Human view declares one grounded job to be done. Its opening title gives the brief answer to that job, and each subsequent section declares the distinct reader question it answers. A section with no necessary reader question does not belong in the Human view.
+
 Avoid arbitrary three-step summaries, generic headings that erase real stages, invented jargon substitutes, redundant journey strips and closing recaps, decorative components with no reader job, and first-person claims the user never made.
 
 ## Required HTML markers
@@ -30,7 +32,16 @@ Avoid arbitrary three-step summaries, generic headings that erase real stages, i
     <button type="button" data-set-view="human" aria-pressed="true">Human</button>
     <button type="button" data-set-view="agent" aria-pressed="false">Agent</button>
   </nav>
-  <section id="human-view" aria-labelledby="human-title">...</section>
+  <section
+    id="human-view"
+    aria-labelledby="human-title"
+    data-job-to-be-done="Trace every recommendation input back to evidence"
+  >
+    <section
+      data-human-section="The data path"
+      data-job-question="Where does each input come from and where does it go?"
+    >...</section>
+  </section>
   <main id="agent-view">...</main>
 </body>
 ```
@@ -46,6 +57,17 @@ Include:
 
 Set `artifact-color-meaning` to `none` when no non-neutral color is used.
 
+When a legend is necessary, declare its one semantic dimension and its peer values:
+
+```html
+<div class="legend" data-legend-dimension="verification status">
+  <span data-legend-value="verified">Verified</span>
+  <span data-legend-value="not verified">Not verified</span>
+</div>
+```
+
+Never combine different dimensions—such as verification, roadmap position, optionality, and unresolvedness—inside one legend. If the values can apply simultaneously, separate or localize them instead.
+
 ## Source manifest
 
 Include near the end of `<body>`:
@@ -54,9 +76,16 @@ Include near the end of `<body>`:
 <script type="application/json" id="artifact-source-manifest">
 {
   "source": "path/to/source.md",
+  "humanJob": "Trace every recommendation input back to evidence",
   "sourceSections": ["Purpose", "Step 1 — Alert"],
   "agentSectionsRendered": ["Purpose", "Step 1 — Alert"],
   "humanSections": ["Alert · Tell me what happened"],
+  "humanSectionQuestions": [
+    {
+      "section": "Alert · Tell me what happened",
+      "question": "What happened and what should I do next?"
+    }
+  ],
   "unresolvedItems": ["The definition remains open"]
 }
 </script>
@@ -72,9 +101,13 @@ Audit every accent: name its meaning, confirm that meaning is stable, pair it wi
 
 Create hierarchy in this order: sequence and layout; whitespace; typography; neutral surfaces and borders; semantic color only when the first four are insufficient.
 
+A legend is a semantic contract, not a collection of useful labels. It contains one named dimension and mutually exclusive peer values. Put additional dimensions in separate fields or local annotations.
+
 ## Final QA
 
 - Human defaults correctly and tells the stages in order.
+- The opening answers `humanJob`; every Human section answers its recorded reader question.
+- Any heading that promises a number of peer kinds, stages, or states renders exactly that number.
 - Agent is complete and source statuses are intact.
 - Toggle works with pointer, keyboard, and assistive technology.
 - Body text meets WCAG AA contrast and mobile has no horizontal overflow.
@@ -82,4 +115,5 @@ Create hierarchy in this order: sequence and layout; whitespace; typography; neu
 - No TODOs, template labels, invented claims, or unresolved placeholders remain.
 - Source manifest matches the source and both rendered views.
 - Color metadata names every non-neutral family used.
+- Every legend declares one semantic dimension; unlike dimensions never share a key.
 - Deployment occurs only after a separate request.

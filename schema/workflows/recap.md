@@ -1,0 +1,18 @@
+# Recap Workflow
+
+> This routed procedure is extracted from the root contract. Load it only for this route; repository-relative paths are relative to the Engram root.
+
+A recap is a personal weekly record built from the wiki — what was learned, what changed, and what's ahead. It is written for the user's own review, not an external audience: no background re-explanation, no stakeholder scorecards or satisfaction estimates, no framing for a reader who wasn't there.
+
+1. **Determine the window.** List `artifact/recap/` for the most recent `<YYYY>-w<WW>` folder; the window starts the day after that week's end. If no recap exists yet, ask the user for a start date. The window ends today. Name the new folder by the ISO week of the window's end date, zero-padded (`2026-w05`, `2026-w28`).
+2. **Determine scope.** If the user names a project or thread, narrow to it. Otherwise cover everything new in the wiki in the window.
+3. **Retrieve.** Read `wiki/main/index.md`, then collect every `wiki/main/log.md` entry dated in the window — sweep to today, don't stop early. Read every page those entries touch (sources, notes, concepts, entities, positions, questions) in full, including in-window updates to older pages.
+4. **Extract**, in this order, skipping any section with nothing in-window:
+   - **The week** — a 3–5 sentence arc per thread: where it stood, what moved, what got corrected, where it stands now. Pure synthesis of the sections below — no claims that aren't cited there.
+   - **What happened** — dated milestones, one line each. The user's work only; skip vault housekeeping (`log.md` already records it).
+   - **What changed** — decisions, corrections, and direction shifts, with whom, why, and what each superseded (corrections count; show lineage). Feedback that changed something belongs here, attached to the change it produced; unresolved friction goes under What's ahead.
+   - **What was learned** — only learnings new this week, each tagged **domain** or **craft**; skip anything already established in prior recaps.
+   - **What's ahead** — open questions opened or materially advanced this week (one status line each), then next steps explicitly stated in in-window pages — never invented. From the second recap on, open with a check of the prior week's next steps: done / carried / dropped.
+5. **Provenance discipline** (same bar as Query): every claim cites its wiki page; the user's views come only from confirmed `## My take` sections and notes they authored — never from a raw transcript, never from a take marked pending (flag those instead). Drop any claim that can't be cited. Mechanics, not operational data — no record identifiers or raw operational metrics unless load-bearing for a decision.
+6. **Build `artifact/recap/<YYYY-wWW>/index.html` via a Sonnet subagent** — extraction is the main session's judgment; the page-making is delegated. Write the extracted, cited content to a scratch file, then launch an Agent (`model: sonnet`) whose prompt names that file, the target path, and the brand guide (`artifact/_brand/design.md`; dark via `design.dark.md` / `prefers-color-scheme`), plus `artifact/recap/AGENTS.md` for series conventions if it exists. It renders one self-contained static HTML page, no build step; from the second recap on, also point it at the prior week's page as the visual pattern to match. Verify the rendered result in a preview before reporting. Recaps remain temporary artifacts; moving or discarding them requires a user request.
+7. **Report back:** file written, per-section counts, claims dropped for lack of grounding, pending takes flagged, and `git status` confirming nothing under `wiki/` or `artifact/` became tracked.

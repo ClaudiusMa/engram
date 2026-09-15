@@ -17,6 +17,8 @@
     "source_type": "text",
     "entity_kind": "text",
     "note_type": "text",
+    "applies_when": "multitext",
+    "not_for": "multitext",
     "url": "text",
     "file": "text",
     "repo": "text",

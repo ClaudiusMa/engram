@@ -1,6 +1,6 @@
 export const meta = {
   name: 'artifact-sync',
-  description: "Reconcile an artifact (index.html primary, populated Human/ as supplement) against PKS knowledge added since the last sync; write ONE dated report into Human/. Incremental by default; proposes, never applies.",
+  description: "Reconcile an Engram artifact or an explicitly requested external-project artifact (index.html primary, populated Human/ as supplement) against Engram knowledge added since the last sync; write ONE dated report into Human/. Incremental by default; proposes, never applies.",
   phases: [
     { title: 'Scope',              detail: 'grep-first log read; watermark + cumulative ledger from latest report; gate by mode (or forced pages)', model: 'sonnet' },
     { title: 'Reconcile & Report', detail: 'small delta (≤4 pages): ONE agent reads surfaces + pages, self-checks, writes the report', model: 'sonnet' },
@@ -24,11 +24,13 @@ for (const k of ['pksRoot', 'artifactPath', 'today']) {
 const forcePages = Array.isArray(A.preselectedPages) ? A.preselectedPages : []
 if (!forcePages.length && !A.mode) throw new Error(`artifact-sync: "mode" required (incremental|latest|backfill) unless preselectedPages is given. The dispatcher asks latest-vs-backfill when no prior report exists.`)
 if (A.mode && !['incremental', 'latest', 'backfill'].includes(A.mode)) throw new Error(`artifact-sync: bad mode "${A.mode}".`)
-const pksRoot = A.pksRoot, artifactRel = A.artifactPath, today = A.today, since = A.since || null
+const pksRoot = A.pksRoot, artifactTarget = A.artifactPath, today = A.today, since = A.since || null
 const mode = forcePages.length ? 'preselected' : A.mode
-const ART = `${pksRoot}/${artifactRel}`, HUMAN = `${ART}/Human`, WIKI = `${pksRoot}/wiki/main`
+const ART = artifactTarget.startsWith('/') ? artifactTarget : `${pksRoot}/${artifactTarget}`
+const HUMAN = `${ART}/Human`, WIKI = `${pksRoot}/wiki/main`
 const INDEX_HTML = `${ART}/index.html`
-const artifactName = artifactRel.split('/').filter(Boolean).pop()
+const artifactName = ART.split('/').filter(Boolean).pop()
+const artifactLabel = artifactTarget.startsWith('/') ? artifactName : artifactTarget
 const reportPath = `${HUMAN}/knowledge-sync-${today}.md`
 
 const SMALL_MAX = 4, BATCH_SIZE = 4, PER_PAGE_EST = 15000, HARD_MAX_PAGES = A.maxPages || 45
@@ -83,7 +85,7 @@ const REPORT_SCHEMA = { type:'object', additionalProperties:false, properties:{
 const READONLY = `You are READ-ONLY. Do NOT write, edit, create, move, or delete any file. Return findings ONLY as structured output.`
 
 const KINDS = `promotes (a cited assumption/open item now supported) · resolves (a cited open question answered) · contradicts (the page challenges what the artifact currently claims — FLAG, no overwrite) · drift (a Human/ entry no longer matches its OWN cited source — human surface only — FLAG) · adds (in-scope knowledge the artifact doesn't cover AND that clears the materiality bar; if it conflicts with another source, keep kind=adds + fill 'tension').
-Every delta carries: surface ('deliverable' for index.html, 'human' for a Human/ file, 'none' for adds with no anchor), anchor ("index.html § <section>" or "<file>.md › <entry>", or "new"), a verbatim evidence quote, and sourceTrace = the PKS page path. A surviving add ALSO carries whyMaterial: one line naming the artifact gap or claim it serves.`
+Every delta carries: surface ('deliverable' for index.html, 'human' for a Human/ file, 'none' for adds with no anchor), anchor ("index.html § <section>" or "<file>.md › <entry>", or "new"), a verbatim evidence quote, and sourceTrace = the Engram page path. A surviving add ALSO carries whyMaterial: one line naming the artifact gap or claim it serves.`
 
 const MATERIALITY = `MATERIALITY BAR (adds only — the other kinds anchor to existing artifact claims and are material by construction): the artifact is a curated deliverable with an editorial line, NOT a mirror of the wiki. Propose an add ONLY if it would materially change what the artifact tells its reader — it fills a gap the artifact's own structure implies (a TODO/open section, a question it poses), or directly strengthens/updates/corrects one of the artifact's core claims. Topical adjacency is NOT material. When unsure, do not propose — demote to a ONE-LINE noted mention instead.`
 
@@ -118,14 +120,14 @@ Emit: watermark, syncedThrough, artifactScope, surfaces, priorLedger, fanOut (pa
 
 const surfaceReadList = (surf) => [
   surf.deliverable ? `- PRIMARY — ${INDEX_HTML}: the deliverable is this artifact's source of truth. Read it in full; its sections and claims are the dedup + contradiction surface, and deltas anchor to its sections.` : null,
-  surf.human ? `- SUPPLEMENT — every canonical *.md in ${HUMAN}/ (brief, decisions, open_questions, reflections, onboarding; SKIP knowledge-sync-*): entries cite PKS pages via "Source:" lines — use that citation join for promotes/resolves/drift.` : null,
+  surf.human ? `- SUPPLEMENT — every canonical *.md in ${HUMAN}/ (brief, decisions, open_questions, reflections, onboarding; SKIP knowledge-sync-*): entries cite Engram pages via "Source:" lines — use that citation join for promotes/resolves/drift.` : null,
 ].filter(Boolean).join('\n')
 
 const reportRules = (surf, watermark, syncedThrough, inScopeCount, skipped, reconciledCount, cumulativeLedger) => {
   const surfLine = [surf.deliverable ? 'index.html (primary)' : null, surf.human ? 'Human/ canonical files (supplement)' : null].filter(Boolean).join(' + ')
   return `Structure of ${reportPath} (markdown; PROPOSAL only):
 # Knowledge Sync — ${today}
-- Artifact: ${artifactRel}
+- Artifact: ${artifactLabel}
 - Mode: ${mode}${since ? ` (since ${since})` : ''}. **Synced through: ${syncedThrough}** (prior watermark: ${watermark || 'none — first sync'}).
 - Reconciled against: ${surfLine}.
 - One-line summary of the delta this run.
@@ -134,13 +136,13 @@ const reportRules = (surf, watermark, syncedThrough, inScopeCount, skipped, reco
 "${inScopeCount} in scope; ${reconciledCount} reconciled this run (mode=${mode}); ${skipped.length} skipped as adjacency-only." Deliberate scoping, not truncation.
 
 ## Proposed changes
-Order: Promotes, Resolves, Contradicts/Drift (⚠), Adds (⚠ on any with 'tension'). Each item: the anchor ("index.html § <section>" or "<file>.md › <entry>", or "new" for adds), the proposed change, the verbatim evidence quote, the PKS source page. Adds also carry their whyMaterial line.
+Order: Promotes, Resolves, Contradicts/Drift (⚠), Adds (⚠ on any with 'tension'). Each item: the anchor ("index.html § <section>" or "<file>.md › <entry>", or "new" for adds), the proposed change, the verbatim evidence quote, the Engram source page. Adds also carry their whyMaterial line.
 
 ## Reconciled — no surviving delta
 List reconciled pages that produced nothing.
 
 ## Noted, not proposed
-In-scope adds dropped by the materiality bar — ONE line each (PKS page + gist), no evidence blocks. Omit this section entirely if there are none.
+In-scope adds dropped by the materiality bar — ONE line each (Engram page + gist), no evidence blocks. Omit this section entirely if there are none.
 
 ## Ledger (cumulative)
 - Synced through: ${syncedThrough}
@@ -153,26 +155,26 @@ ${cumulativeLedger.map(p => `  - ${p}`).join('\n')}
 
 const smallPrompt = (fo, scope, rules) => `You may write EXACTLY ONE file: ${reportPath} (create the Human/ folder if it doesn't exist). Nothing else — do NOT edit canonical Human/ files, ${ART}/Agents/, or the deliverable. Read-only except that one report.
 
-Reconcile ${fo.length} PKS page(s) against the ${artifactName} artifact, then write the sync report yourself.
+Reconcile ${fo.length} Engram page(s) against the ${artifactName} artifact, then write the sync report yourself.
 
 Artifact scope: ${scope}
 
 Claims surfaces — read in full, ONCE:
 ${surfaceReadList(surfaces)}
 
-PKS pages to reconcile — read in full (only these):
+Engram pages to reconcile — read in full (only these):
 ${fo.map(p => `- ${WIKI}/${p.path}  (title "${p.title}", ${p.type})`).join('\n')}
 
 Classify deltas per page: ${KINDS}
 
 SELF-CHECK every delta — you are the only checker on this run:
-- grounded in a verbatim quote actually present in the PKS page;
+- grounded in a verbatim quote actually present in the Engram page;
 - in scope for this artifact;
 - non-duplicate: NEVER propose adding what index.html or Human/ already states;
 - for contradicts/drift, actively try to refute yourself first — is it a REAL conflict with what the artifact says, or merely new detail? New detail does NOT count. Keep only what survives your own refutation.
 
 ${MATERIALITY}
-Adds that fail the bar go in the report's "Noted, not proposed" section as one-liners (PKS page + gist) — never as full proposals.
+Adds that fail the bar go in the report's "Noted, not proposed" section as one-liners (Engram page + gist) — never as full proposals.
 
 Then write the report. ${rules}
 Return reportPath, written:true, deltaCount (deltas that survived), one-line summary.`
@@ -185,7 +187,7 @@ Emit one claim per distinct assertion the artifact makes (compact — faithful 1
 ${fo.map(p => `- ${p.path}  ("${p.title}")`).join('\n')}`
 
 const reconcileBatchPrompt = (batch, claimsForBatch, compactIndex) => `${READONLY}
-Reconcile a SMALL BATCH of PKS pages against the artifact's claims. Do NOT read index.html or Human/ files — everything you need is below.
+Reconcile a SMALL BATCH of Engram pages against the artifact's claims. Do NOT read index.html or Human/ files — everything you need is below.
 
 Pages to read IN FULL (only these):
 ${batch.map(p => `- ${WIKI}/${p.path}  (title "${p.title}", ${p.type})`).join('\n')}
@@ -236,7 +238,7 @@ if (!fanOut.length) {
   return { reportPath: null, written: false, deltaCount: 0, reconciled: 0, note: `up-to-date (mode=${mode})` }
 }
 if (!surfaces.deliverable && !surfaces.human) {
-  log(`⚠ No claims surface: ${artifactRel} has no index.html and no populated Human/. Nothing to reconcile against — no report written.`)
+  log(`⚠ No claims surface: ${ART} has no index.html and no populated Human/. Nothing to reconcile against — no report written.`)
   return { reportPath: null, written: false, deltaCount: 0, reconciled: 0, note: 'no claims surface (no index.html, empty/missing Human/)' }
 }
 let cap = HARD_MAX_PAGES

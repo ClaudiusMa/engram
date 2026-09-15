@@ -73,7 +73,21 @@ The `.gitignore` uses a whitelist approach: ignore everything by default, then e
     │   ├── graph.json
     │   └── types.json
     ├── workflows/
+    │   ├── artifact.md
     │   ├── artifact-sync.js
+    │   ├── artifact-sync.md
+    │   ├── clean-transcript.md
+    │   ├── connect-project.md
+    │   ├── human-skill.md
+    │   ├── ingest.md
+    │   ├── lint.md
+    │   ├── note.md
+    │   ├── page-rules.md
+    │   ├── productlab.md
+    │   ├── productlab-migration.md
+    │   ├── project-decision-housekeeper.md
+    │   ├── query.md
+    │   ├── recap.md
     │   └── archive/
     │       └── artifact-humanize-v1.js
     └── templates/
@@ -81,10 +95,13 @@ The `.gitignore` uses a whitelist approach: ignore everything by default, then e
         ├── log.template.md
         ├── source.template.md
         ├── note.template.md
+        ├── human-skill.template.md
+        ├── human-skills-index.template.md
         ├── entity.template.md
         ├── concept.template.md
         ├── position.template.md
         ├── question.template.md
+        ├── project-link.template.json
         └── project.template.md
 ```
 
@@ -98,6 +115,7 @@ wiki/
     ├── raw/          # original source files (the source of truth)
     ├── sources/
     ├── notes/
+    ├── human-skills/ # private human-executed playbooks + compact routing registry
     ├── entities/
     ├── concepts/
     ├── positions/
@@ -108,12 +126,13 @@ wiki/
 ## Page Types
 
 - `source`: an annotation layer for one ingested source. References the original file in `wiki/main/raw/` via the `file:` frontmatter and a `## Source` embed. Contains a factual `## What's in this source` index and the user's optional, confirmed `## My take`. The original file is the source of truth; the source page never duplicates its content.
-- `note`: user-authored content — meeting notes, reading reactions, journals, scratch thoughts. The whole body is the user's voice. Lives at `wiki/main/notes/`.
+- `note`: user-authored content — meeting notes, reading reactions, journals, scratch thoughts. The whole body is the user's voice. Lives at `wiki/main/notes/`. Digest requests always use source ingest instead.
+- `human-skill`: a private, user-owned playbook for a capability the human performs. The agent retrieves it only after a dedicated intent gate and updates it only after the user approves a proposed change. Lives at `wiki/main/human-skills/`; it is not an agent `SKILL.md`.
 - `entity`: a concrete recurring thing
 - `concept`: a neutral idea, term, pattern, or framework
 - `position`: a personal claim or sustained view
 - `question`: an unresolved question being tracked
-- `project`: a pointer to a living, externally-owned repo or folder *outside* the vault. The LLM reads its current state at query time to draw context from work that didn't originate in Engram — but never copies it in or modifies it.
+- `project`: a private pointer to a living external project, created on explicit request. Recorded annotations may be cited; live project reads and ProductLab catalog resolution require explicit activation of the optional integration.
 
 Position pages are intentionally separate from concept pages. Concepts describe ideas. Positions capture what the owner currently believes about those ideas.
 
@@ -121,11 +140,15 @@ Position pages are intentionally separate from concept pages. Concepts describe 
 
 ### Ingest
 
-The LLM reads the private index and related pages, creates an annotation layer for the new source, discusses the source before recording the user's take, updates eligible pages, updates the index, and appends the log. Contradiction auditing remains a separate lint operation.
+Every request to digest a website, paper, file, or supplied text uses source ingest; it never becomes a note or an automatic companion artifact. The detailed procedure is in `schema/workflows/ingest.md`; shared page and intake rules are in `schema/workflows/page-rules.md`. Contradiction auditing remains a separate lint operation.
 
 ### Query
 
-The LLM reads the private index first, then relevant pages, then answers from the wiki. Durable synthesis can be promoted into a concept, position, or question page when the user approves.
+The LLM reads the private index first, then relevant pages, then answers from the wiki. Durable synthesis can be promoted into a concept, position, or question page when the user approves. See `schema/workflows/query.md`.
+
+### Human skills
+
+Human skills externalize practices the user wants to improve through repeated experience. Routing is progressive: ordinary requests never load the skill registry; an explicit human-skill request or an immediate request to perform or reflect on a repeatable human activity may read the compact registry, select at most one direct match, and then load only that skill. The current playbook is authoritative, iteration history stays compact, and no reflection becomes guidance until the user approves the change.
 
 ### Lint
 
@@ -133,7 +156,15 @@ The LLM periodically checks for stale pages, missing links, contradictions, orph
 
 ### Artifacts
 
-The Engram router sends requests to turn a complete research, analysis, or decision document into an artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. The portable skill builds a complete Agent view and a default Human view, follows the user's tone and the source's real sequence, and validates source coverage and restrained visual treatment before handoff.
+The Engram router sends requests to turn a complete research, analysis, or decision document into a visual artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. New outputs live directly at `artifact/<name>/`; a single working document may live at `artifact/<Name>.md`. The artifact folder is already temporary. `artifact/_brand/` remains the permanent build guide. Existing outputs are preserved until the user requests a move or cleanup.
+
+### Optional ProductLab integration
+
+ProductLab behaves as an opt-in extension, disabled by default. Only an explicit request to connect, read, sync, or move work through ProductLab loads `schema/workflows/productlab.md`. Engram agents otherwise create artifacts locally without catalog reads, ownership classification, or migration. A complex artifact can move to ProductLab when the user chooses to move it.
+
+### Workflow protection
+
+`AGENTS.md` contains protected routing cases for digest, note, artifact, and optional integrations. System edits must identify affected before/after behavior, explicitly ask for the user's consent and wait for confirmation before changing behavior, preserve unrelated routes, and verify linked instructions and initializer defaults. Historical instructions cannot silently override the current contract.
 
 ## Direction
 
@@ -142,8 +173,8 @@ The long-term goal is a dedicated frontend for *reading* the wiki — built arou
 - **Concepts as retrieval tags.** Concept pages stay lean and tag-like (one-line definition, list of inbound sources, a few wikilinks to adjacent concepts). The future frontend will use concepts as the primary retrieval key, so heavy prose makes retrieval noisy.
 - **Related pages → "you might also be interested."** Each source page's `## Related pages` section is the foundation for a recommended-next-read block in the future frontend.
 - **Frontend independence.** Markdown stays plain — avoid platform-specific plugin syntax (Dataview, advanced templating). `[[wikilinks]]` and `![[embeds]]` are kept since they're the link primitive of the system.
-- **Meta-bookkeeping excluded from graph view.** `wiki/main/raw/`, `wiki/main/index.md`, and `wiki/main/log.md` are filtered out of graph rendering in whatever frontend platform is used.
-- **Generated artifacts excluded from graph and frontend.** `artifact/` holds shareable deliverables built *from* wiki facts (e.g. a roadmap or dashboard app), not knowledge to ingest. It is hidden from the frontend platform UI via ignore filters and must be filtered out of graph rendering. The system treats it like `schema/` and `bin/`: structure, not knowledge.
+- **Meta-bookkeeping excluded from graph view.** `wiki/main/raw/`, `wiki/main/index.md`, `wiki/main/log.md`, and the human-skill routing registry at `wiki/main/human-skills/index.md` are filtered out of graph rendering in whatever frontend platform is used.
+- **Generated artifacts excluded from graph and frontend.** `artifact/` is temporary output and `_brand/` is its build infrastructure; neither is knowledge to ingest. Both remain hidden from the frontend and graph. Moving an artifact outside Engram requires an explicit user request.
 
 ## Frontend Platform Defaults
 

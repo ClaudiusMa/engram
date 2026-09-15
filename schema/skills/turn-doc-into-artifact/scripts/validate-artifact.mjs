@@ -25,6 +25,29 @@ check(/prefers-color-scheme/i.test(html), "artifact must honor the system color 
 check(!/\b(?:TODO|TBD|lorem ipsum)\b/i.test(html), "artifact contains placeholder text");
 check(!/<script\s+[^>]*src=/i.test(html), "artifact must not depend on external JavaScript");
 
+const humanViewTag = html.match(/<section\b[^>]*id=["']human-view["'][^>]*>/i)?.[0] || "";
+const humanJob = getAttribute(humanViewTag, "data-job-to-be-done");
+check(Boolean(humanJob), "#human-view must declare data-job-to-be-done");
+
+const humanSectionTags = [...html.matchAll(/<section\b[^>]*data-human-section=["'][^"']+["'][^>]*>/gi)].map((match) => match[0]);
+const renderedHumanSections = humanSectionTags.map((tag) => getAttribute(tag, "data-human-section"));
+const renderedHumanQuestions = humanSectionTags.map((tag) => getAttribute(tag, "data-job-question"));
+check(humanSectionTags.length > 0, "Human view must declare at least one data-human-section");
+for (let index = 0; index < humanSectionTags.length; index += 1) {
+  check(Boolean(renderedHumanQuestions[index]), `Human section "${renderedHumanSections[index] || index + 1}" must declare data-job-question`);
+}
+check(new Set(renderedHumanSections.map(normalize)).size === renderedHumanSections.length, "data-human-section values must be unique");
+check(new Set(renderedHumanQuestions.map(normalize)).size === renderedHumanQuestions.length, "data-job-question values must be unique");
+
+const legendTags = [...html.matchAll(/<[a-z][\w:-]*\b[^>]*class=["'][^"']*legend[^"']*["'][^>]*>/gi)].map((match) => match[0]);
+for (const tag of legendTags) {
+  check(Boolean(getAttribute(tag, "data-legend-dimension")), "every legend must declare one data-legend-dimension");
+}
+if (legendTags.length) {
+  const legendValues = [...html.matchAll(/data-legend-value=["'][^"']+["']/gi)];
+  check(legendValues.length >= legendTags.length * 2, "every legend must expose at least two data-legend-value peers");
+}
+
 const sourceMeta = getMeta(html, "artifact-source");
 const colorMeta = getMeta(html, "artifact-color-meaning");
 check(Boolean(sourceMeta), "missing artifact-source metadata");
@@ -37,6 +60,29 @@ if (!manifest) {
   check(typeof manifest.source === "string" && manifest.source.trim(), "manifest.source must be non-empty");
   for (const field of ["sourceSections", "agentSectionsRendered", "humanSections", "unresolvedItems"]) {
     check(Array.isArray(manifest[field]), `manifest.${field} must be an array`);
+  }
+  check(typeof manifest.humanJob === "string" && manifest.humanJob.trim(), "manifest.humanJob must be non-empty");
+  check(Array.isArray(manifest.humanSectionQuestions), "manifest.humanSectionQuestions must be an array");
+  if (humanJob && typeof manifest.humanJob === "string") {
+    check(normalize(manifest.humanJob) === normalize(humanJob), "manifest.humanJob must match data-job-to-be-done");
+  }
+  if (Array.isArray(manifest.humanSections)) {
+    check(
+      JSON.stringify(manifest.humanSections.map(normalize)) === JSON.stringify(renderedHumanSections.map(normalize)),
+      "manifest.humanSections must match rendered data-human-section values in order",
+    );
+  }
+  if (Array.isArray(manifest.humanSectionQuestions)) {
+    const questionSections = manifest.humanSectionQuestions.map((item) => normalize(item?.section));
+    const questions = manifest.humanSectionQuestions.map((item) => normalize(item?.question));
+    check(
+      JSON.stringify(questionSections) === JSON.stringify(renderedHumanSections.map(normalize)),
+      "manifest.humanSectionQuestions sections must match rendered Human sections in order",
+    );
+    check(
+      JSON.stringify(questions) === JSON.stringify(renderedHumanQuestions.map(normalize)),
+      "manifest.humanSectionQuestions questions must match rendered data-job-question values in order",
+    );
   }
   if (Array.isArray(manifest.sourceSections) && Array.isArray(manifest.agentSectionsRendered)) {
     check(
@@ -131,6 +177,10 @@ function check(condition, message) {
 
 function hasId(text, id) {
   return new RegExp(`id=["']${id}["']`, "i").test(text);
+}
+
+function getAttribute(tag, name) {
+  return tag.match(new RegExp(`${name}=["']([^"']*)["']`, "i"))?.[1] || "";
 }
 
 function getMeta(text, name) {

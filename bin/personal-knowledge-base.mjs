@@ -74,14 +74,20 @@ async function initializeVault(destination) {
   await copyFileIfMissing("schema/gitignore.template", path.join(destination, ".gitignore"), created, skipped);
 
   const wikiRoot = path.join(destination, "wiki", "main");
-  for (const subdir of ["raw", "sources", "notes", "entities", "concepts", "positions", "questions", "projects"]) {
+  for (const subdir of ["raw", "sources", "notes", "human-skills", "entities", "concepts", "positions", "questions", "projects"]) {
     await mkdirIfMissing(path.join(wikiRoot, subdir), created, skipped);
   }
 
-  await mkdirIfMissing(path.join(destination, "artifact", "workshop"), created, skipped);
+  await mkdirIfMissing(path.join(destination, "artifact"), created, skipped);
 
   await copyFileIfMissing("schema/templates/index.template.md", path.join(wikiRoot, "index.md"), created, skipped);
   await copyFileIfMissing("schema/templates/log.template.md", path.join(wikiRoot, "log.md"), created, skipped);
+  await copyFileIfMissing(
+    "schema/templates/human-skills-index.template.md",
+    path.join(wikiRoot, "human-skills", "index.md"),
+    created,
+    skipped,
+  );
 
   await copyFileIfMissing("schema/obsidian/app.json", path.join(destination, ".obsidian", "app.json"), created, skipped);
   await copyFileIfMissing(

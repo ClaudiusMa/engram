@@ -1,5 +1,6 @@
 ---
 type: project
+project_id:
 title:
 created:
 updated:
@@ -19,8 +20,10 @@ related: []
 
 ## Where it lives
 
+- Project ID:
+- Status: active | archived
 - Repo:
-- Local:
+- Local (cached; resolve through ProductLab `_catalog/` only when its optional integration is explicitly enabled):
 
 ## My take
 

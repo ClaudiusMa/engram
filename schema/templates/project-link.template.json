@@ -1,0 +1,10 @@
+{
+  "schema_version": "product-lab-project/v1",
+  "project_id": "stable-project-id",
+  "name": "Project name",
+  "aliases": [],
+  "status": "active",
+  "catalog": "../_catalog",
+  "pks_project_page": "project-page-slug",
+  "artifact_brand_ref": "pks-artifact-brand"
+}
