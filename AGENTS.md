@@ -10,6 +10,12 @@ public structure includes `README.md`, `LICENSE`, `.gitignore`, `package.json`,
 `bin/`, `schema/`, and the tracked `artifact/README.md` shell. Do not add
 tooling unless the user asks or repeated pain justifies it.
 
+Use direct tools for trivial operations. Delegate bounded scans, mechanical
+edits, and test runs to a lower-cost model with low reasoning, explicitly
+setting the worker model and giving it only necessary context. Keep diagnosis,
+design decisions, and final review with the main agent; escalate ambiguous or
+failed work.
+
 ## Identity and boundaries
 
 - Obsidian is the frontend; the LLM edits Markdown.
