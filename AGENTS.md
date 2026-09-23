@@ -1,8 +1,9 @@
 # AGENTS.md
 
 This repo is Engram: an Obsidian vault and open-source schema for a private,
-LLM-maintained knowledge system. The public repository contains structure only;
-`wiki/` is private and gitignored. GitHub stores structure, not knowledge.
+LLM-maintained knowledge system. The public repository contains structure only. In a workspace with
+`.engram/private.json`, knowledge is tracked privately; otherwise `wiki/` stays
+gitignored. Follow [repository boundaries](schema/workflows/repository-sync.md).
 
 The canonical public name is **Engram**. `PKS`, `personal-knowledge-base`, and
 `personal-knowledge-system` remain permitted internal implementation names. The
@@ -19,9 +20,13 @@ failed work.
 ## Identity and boundaries
 
 - Obsidian is the frontend; the LLM edits Markdown.
+- Across chat, artifacts, and external documents, factual claims require inspected
+  evidence for their content and attribution (person, event, time, status).
+  Prior agent drafts are not evidence. If support is missing, report what you
+  checked and what remains unverified; leave the affected field unchanged.
 - Use one wiki at launch: `wiki/main/`, with one root `AGENTS.md`.
-- Before any file write, classify it: structure is tracked; knowledge is
-  gitignored. Never ingest private content into tracked files.
+- Before any file write, classify it: reusable structure or private knowledge.
+  Knowledge may be tracked only in private mode; never export it publicly.
 - `wiki/` writes are allowlist-only. `raw/` receives originals through ingest or clean; `sources/` is
   written by ingest; `notes/` only files the user authored; agents never create, expand, or backlink notes on their own initiative; `human-skills/`
   only follows the human-skill workflow; concepts, entities, positions,
@@ -90,7 +95,7 @@ intent, old approvals, or consent for another change are insufficient.
 
 ## Public/private check
 
-Before a commit or status report, verify `wiki/` remains ignored and private
-source files, URLs, summaries, takes, indexes, logs, human-skill pages, and
-project pointers are not tracked. See the selected workflow for its complete
-procedure and reporting requirements.
+Before a commit or status report, apply the repository-mode checks in
+[repository boundaries](schema/workflows/repository-sync.md). Private sources,
+URLs, summaries, takes, indexes, logs, human skills, and project pointers must
+never enter the public export.

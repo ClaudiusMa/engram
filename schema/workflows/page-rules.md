@@ -96,8 +96,8 @@ This makes them useful in Obsidian graph view as synthesis nodes.
 
 Before every commit or status report:
 
-- `git status` must not show private source files or wiki content as tracked.
-- `wiki/` must remain ignored.
+- Apply [repository boundaries](repository-sync.md): in public/default mode, `wiki/` must remain ignored and private content untracked; in private mode, tracking is permitted only for the configured private repository.
+- Private content must never be included in the public export.
 - URLs are private.
 - `index.md` and `log.md` are private.
 - Source summaries, takes, and page links are private.

@@ -78,8 +78,8 @@ The context budget is the compact registry plus one matched skill. Do not traver
 
 ## Privacy and verification
 
-- Human-skill pages, their registry, links, and iteration records are private knowledge and remain under ignored `wiki/` paths.
-- Never copy a human skill into tracked `schema/`, an agent skill, or a project.
-- After a create or update, verify the registry has one row for the page, all wikilinks resolve, the required headings are present, and `git status` does not show the human-skill content as tracked.
+- Human-skill pages, their registry, links, and iteration records are private knowledge and remain under `wiki/`, ignored in public/default mode and eligible for private tracking only under [repository boundaries](repository-sync.md).
+- Never copy a human skill into public-exportable `schema/`, an agent skill, or a project.
+- After a create or update, verify the registry has one row for the page, all wikilinks resolve, the required headings are present, and the repository-mode privacy checks pass; no human-skill content is public-exportable.
 
 After this workflow is explicitly activated, consult the relevant naming, voice, and privacy sections of [shared page rules](page-rules.md) before writing wiki pages.

@@ -140,6 +140,7 @@ test("privacy boundary and package contents expose structure only", async (t) =>
   assert.equal(packedFiles.includes("schema/workflows/artifact-humanize.js"), false, "package should not expose the retired Humanizer as active");
   assert.equal(packedFiles.some((filePath) => filePath.startsWith("wiki/")), false, "package must exclude wiki content");
   assert.equal(packedFiles.some((filePath) => filePath.startsWith(".obsidian/")), false, "package must exclude live settings");
+  assert.equal(packedFiles.includes("schema/CHANGELOG.md"), false, "package must exclude private incident records in either repository mode");
   const allowedPackageRoots = new Set(["AGENTS.md", "README.md", "LICENSE", "package.json", "bin", "schema"]);
   for (const filePath of packedFiles) {
     const packageRoot = filePath.includes("/") ? filePath.slice(0, filePath.indexOf("/")) : filePath;
