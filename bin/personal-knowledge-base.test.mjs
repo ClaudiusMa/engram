@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const initializer = path.join(repoRoot, "bin", "personal-knowledge-base.mjs");
-const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab"];
+const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab", "session-learning"];
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 test("initializer creates the complete private knowledge-system skeleton without overwriting files", async (t) => {
@@ -104,6 +104,8 @@ test("privacy boundary and package contents expose structure only", async (t) =>
     "wiki/main/human-skills/private.md",
     ".obsidian/private.json",
     "artifact/example/private.md",
+    ".local/session-learning/sessions/private.json",
+    ".local/session-learning/candidates/example/SKILL.md",
     "private.md",
     "schema/.DS_Store",
   ];

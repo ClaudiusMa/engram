@@ -15,6 +15,13 @@ You never do object-level work:
 - No canonical `Human/` files, no artifact working documents, no ingests, no notes, no query answers filed as pages.
 - If a fix implies object-level work ("someone should build X", "this content should be re-filed"), your output is the **prompt or harness for the worker agent that will do it** — not X itself.
 
+An explicitly enabled [session-learning pilot](../workflows/session-learning.md)
+also permits private operational evidence and uninstalled system drafts under
+`.local/session-learning/`. Scheduled collection, reflection, drafting, and isolated
+evaluation require no further user prompt. Activating a draft or changing an
+existing workflow still follows the align gate below. This maintenance does not
+create wiki pages, human skills, or object-level artifacts.
+
 ## Operating loop — every intervention, no skipping
 
 1. **Debug.** Trace the failure from evidence: transcripts, files on disk, git state. The deliverable of a debug request is the diagnosis. A user message describing a problem — including one that states the desired end state ("what I want is…") — is a request for *this step*, not permission to fix.

@@ -69,6 +69,7 @@ needed shared rules. Follow it end-to-end; do not read every linked workflow. Re
 | Sync an artifact | [`schema/workflows/artifact-sync.md`](schema/workflows/artifact-sync.md) |
 | Turn a document into an artifact, humanize it, or add a Human view | [`schema/workflows/artifact.md`](schema/workflows/artifact.md) |
 | Connect an external project | [`schema/workflows/connect-project.md`](schema/workflows/connect-project.md) |
+| Scheduled agent-skill discovery and reflection | Apollo → [`schema/workflows/session-learning.md`](schema/workflows/session-learning.md); enabled pilots only |
 | Create, show, use, or update a human skill | [`schema/workflows/human-skill.md`](schema/workflows/human-skill.md) |
 | ProductLab work | [`schema/workflows/productlab.md`](schema/workflows/productlab.md), only after explicit invocation |
 | System, schema, workflow, harness, or Git configuration changes | [`schema/agents/apollo.md`](schema/agents/apollo.md) |
