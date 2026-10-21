@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repo is Engram: an Obsidian vault and open-source schema for a private,
+This repo is Engram: an open-source schema for a private,
 LLM-maintained knowledge system. The public repository contains structure only. In a workspace with
 `.engram/private.json`, knowledge is tracked privately; otherwise `wiki/` stays
 gitignored. Follow [repository boundaries](schema/workflows/repository-sync.md).
@@ -11,15 +11,13 @@ public structure includes `README.md`, `LICENSE`, `.gitignore`, `package.json`,
 `bin/`, `schema/`, and the tracked `artifact/README.md` shell. Do not add
 tooling unless the user asks or repeated pain justifies it.
 
-Use direct tools for trivial operations. Delegate bounded scans, mechanical
-edits, and test runs to a lower-cost model with low reasoning, explicitly
-setting the worker model and giving it only necessary context. Keep diagnosis,
-design decisions, and final review with the main agent; escalate ambiguous or
-failed work.
+Use direct tools for trivial operations. Delegate bounded scans, mechanical edits,
+and test runs to a lower-cost model with low reasoning and only necessary context.
+Keep diagnosis, design decisions, and final review with the main agent.
 
 ## Identity and boundaries
 
-- Obsidian is the frontend; the LLM edits Markdown.
+- The LLM edits Markdown.
 - Across chat, artifacts, and external documents, factual claims require inspected
   evidence for their content and attribution (person, event, time, status).
   Prior agent drafts are not evidence. If support is missing, report what you
@@ -42,10 +40,8 @@ failed work.
 - `artifact/` is temporary; `artifact/_brand/` remains the permanent design guide. A routing change never
   authorizes moving or deleting existing artifact files.
 - ProductLab is disabled unless the user explicitly invokes that integration.
-  Project names, existing pointers, artifact complexity, and earlier use do not
-  enable it; ordinary work does not read its catalog, classify ownership, or
-  migrate outputs or request a handoff. Human-skill registry and pages are deferred until their
-  intent gate passes.
+  Ordinary work does not read its catalog or migrate outputs. Human-skill registry
+  and pages are deferred until their intent gate passes.
 
 The source-page contract is fixed: `## My take`, `## What's in this source`,
 `## Source`, with optional `## Related pages` and `## Source notes`; no other
@@ -55,8 +51,8 @@ reasoning, caveats, or interpretation. If meaning is unclear, ask.
 
 ## Routing
 
-Classify the request first, then load only the selected workflow and explicitly
-needed shared rules. Follow it end-to-end; do not read every linked workflow. Repository-relative paths below are relative to this root.
+Classify the request first, then load only the selected workflow and needed shared
+rules. Follow it end-to-end; do not read every linked workflow. Paths below are repo-relative.
 
 | Intent | Route |
 | --- | --- |
@@ -69,10 +65,10 @@ needed shared rules. Follow it end-to-end; do not read every linked workflow. Re
 | Sync an artifact | [`schema/workflows/artifact-sync.md`](schema/workflows/artifact-sync.md) |
 | Turn a document into an artifact, humanize it, or add a Human view | [`schema/workflows/artifact.md`](schema/workflows/artifact.md) |
 | Connect an external project | [`schema/workflows/connect-project.md`](schema/workflows/connect-project.md) |
-| Scheduled agent-skill discovery and reflection | Apollo → [`schema/workflows/session-learning.md`](schema/workflows/session-learning.md); enabled pilots only |
+| Scheduled agent-skill discovery and reflection | [`schema/workflows/session-learning.md`](schema/workflows/session-learning.md); enabled pilots only — stay on this workflow, not the structure role |
 | Create, show, use, or update a human skill | [`schema/workflows/human-skill.md`](schema/workflows/human-skill.md) |
 | ProductLab work | [`schema/workflows/productlab.md`](schema/workflows/productlab.md), only after explicit invocation |
-| System, schema, workflow, harness, or Git configuration changes | [`schema/agents/apollo.md`](schema/agents/apollo.md) |
+| System, schema, workflow, harness, or Git configuration changes | [`schema/agents/apollo.md`](schema/agents/apollo.md) (Apollo structure role) |
 
 Digest takes precedence over source-versus-note heuristics. For applicable
 classification and page conventions, load [`schema/workflows/page-rules.md`](schema/workflows/page-rules.md).
@@ -88,7 +84,7 @@ on a repeatable activity; it may read only its compact registry and one match.
 ## Protected behavior
 
 Routes, destinations, provenance, and existing content survive refactoring,
-cleanup, and integrations. System edits route through Apollo. Before changing
+cleanup, and integrations. System edits route through Apollo, the structure role. Before changing
 workflow behavior, show the proposed change, explicitly ask for the user’s
 consent, and wait for confirmation before editing. Apollo honors explicit
 consent already given for that exact change in the current task; inferred

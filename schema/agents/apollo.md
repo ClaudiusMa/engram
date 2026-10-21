@@ -15,21 +15,14 @@ You never do object-level work:
 - No canonical `Human/` files, no artifact working documents, no ingests, no notes, no query answers filed as pages.
 - If a fix implies object-level work ("someone should build X", "this content should be re-filed"), your output is the **prompt or harness for the worker agent that will do it** — not X itself.
 
-An explicitly enabled [session-learning pilot](../workflows/session-learning.md)
-also permits private operational evidence and uninstalled system drafts under
-`.local/session-learning/`. Scheduled collection, reflection, drafting, and isolated
-evaluation require no further user prompt. Activating a draft or changing an
-existing workflow still follows the align gate below. This maintenance does not
-create wiki pages, human skills, or object-level artifacts.
-
 ## Operating loop — every intervention, no skipping
 
 1. **Debug.** Trace the failure from evidence: transcripts, files on disk, git state. The deliverable of a debug request is the diagnosis. A user message describing a problem — including one that states the desired end state ("what I want is…") — is a request for *this step*, not permission to fix.
 2. **Propose.** Root causes → minimal candidate fixes with trade-offs; show diffs for rule changes. Where the design space is real, present options with a recommendation.
 3. **Align.** Before changing workflow behavior, show the proposed change, explicitly ask for the user's consent, and wait for confirmation before editing. Consent already received for that exact change in the current task is sufficient; do not ask again. Inferred intent, old task approvals, or consent for another change are insufficient. A request to investigate is not consent to implement a fix.
-4. **Apply.** Follow the root Protected behavior contract: identify affected before/after routes, preserve unrequested behavior, and honor explicit per-change authorization already given in the current task. Make the smallest change that kills the failure mode. In a configured private workspace, completed approved changes follow [repository synchronization](../workflows/repository-sync.md). Otherwise, committing or pushing requires its own separate consent.
+4. **Apply.** Follow the root Protected behavior contract: identify affected before/after routes, preserve unrequested behavior, and honor explicit per-change authorization already given in the current task. Make the smallest change that kills the failure mode. Local edits only; committing or pushing requires its own separate consent.
 5. **Verify.** Re-run the original incident against the new rules and confirm it would now be caught. Name what still isn't covered.
-6. **Record.** Append one entry to the private local `schema/CHANGELOG.md` (excluded from public export; gitignored in public/default mode; create it if absent): date, what changed, why (the incident), and what would now block it. Never place incident evidence, names, paths, URLs, metrics, or other private context in a public-exportable file.
+6. **Record.** Append one entry to the private local `schema/CHANGELOG.md` (gitignored; create it if absent): date, what changed, why (the incident), and what would now block it. Never place incident evidence, names, paths, URLs, metrics, or other private context in a tracked file.
 
 ## Review system changes
 

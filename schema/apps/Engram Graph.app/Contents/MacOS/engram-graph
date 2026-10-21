@@ -1,0 +1,36 @@
+#!/bin/bash
+# Engram Graph: rebuilds the map from the Engram folder this app sits in, then opens it.
+
+APP="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="$(dirname "$APP")"
+SCRIPT="$ROOT/bin/engram-graph.mjs"
+
+alert() {
+  osascript -e 'on run argv' -e 'display alert "Engram Graph" message (item 1 of argv) as critical' -e 'end run' "$1" >/dev/null 2>&1
+}
+
+if [ ! -f "$SCRIPT" ]; then
+  alert "Keep Engram Graph inside your Engram folder (next to the wiki folder), then open it again."
+  exit 1
+fi
+
+# Apps opened from Finder do not see the Terminal PATH, so look where Node.js usually lives.
+NODE=""
+for candidate in "$(command -v node 2>/dev/null)" /opt/homebrew/bin/node /usr/local/bin/node \
+  "$HOME/.volta/bin/node" "$HOME/.asdf/shims/node" "$HOME/.local/share/fnm/aliases/default/bin/node" \
+  "$HOME"/.nvm/versions/node/*/bin/node; do
+  if [ -n "$candidate" ] && [ -x "$candidate" ]; then NODE="$candidate"; break; fi
+done
+if [ -z "$NODE" ]; then
+  NODE="$(/bin/zsh -ilc 'command -v node' 2>/dev/null | tail -n 1)"
+fi
+if [ -z "$NODE" ] || [ ! -x "$NODE" ]; then
+  answer="$(osascript -e 'button returned of (display alert "Engram Graph needs Node.js" message "Install Node.js once, then open Engram Graph again." buttons {"Not now", "Get Node.js"} default button 2)' 2>/dev/null)"
+  [ "$answer" = "Get Node.js" ] && open "https://nodejs.org/en/download"
+  exit 1
+fi
+
+if ! output="$("$NODE" "$SCRIPT" "$ROOT" 2>&1)"; then
+  alert "The map could not be built. $(printf '%s' "$output" | tail -n 1)"
+  exit 1
+fi

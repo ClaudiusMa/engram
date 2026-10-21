@@ -16,6 +16,14 @@ Create or `cd` into the folder you want to use as your knowledge system, then ru
 npx github:ClaudiusMa/engram init
 ```
 
+## Graph View
+
+On a Mac, double-click **Engram Graph** in your Engram folder. It opens a map of everything in your Engram (ideas, people and things, stances, open questions, projects, sources, and your notes) in your browser. Click any dot to read about that page and see what it connects to.
+
+Each time you open it, the map is rebuilt from your current pages, so it is always up to date. The map is built on your computer and is never uploaded. Engram Graph needs Node.js; if it is missing, the app offers a link to install it. On other systems, run `npm run graph`.
+
+If your Engram was set up before Engram Graph existed, run the Quick Start command again in that folder to add it. Existing files are left unchanged.
+
 ## Privacy Model
 
 GitHub holds structure, not content.

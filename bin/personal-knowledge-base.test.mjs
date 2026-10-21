@@ -56,6 +56,10 @@ test("initializer creates the complete private knowledge-system skeleton without
     assert.equal(await exists(path.join(target, relativePath)), true, `missing ${relativePath}`);
   }
   assert.equal(await exists(path.join(target, "CLAUDE.md")), false, "legacy CLAUDE.md should not be created");
+  if (process.platform === "darwin") {
+    const launcher = path.join(target, "Engram Graph.app", "Contents", "MacOS", "engram-graph");
+    assert.equal(((await fs.stat(launcher)).mode & 0o111) !== 0, true, "Engram Graph launcher must stay executable");
+  }
   assert.deepEqual(await findNamed(target, ".DS_Store"), [], "initializer should not copy Finder metadata");
 
   const agentsPath = path.join(target, "AGENTS.md");
@@ -255,7 +259,12 @@ test("artifact validator accepts the portable two-view contract and rejects an A
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="artifact-source" content="${sourcePath}">
 <meta name="artifact-color-meaning" content="blue=links, focus, and selected controls">
-<style>@media (prefers-color-scheme: dark) { body { background: #000; } } :root { --blue-700: #06f; }</style>
+<style>
+:root { --wide: 68rem; --read: 40rem; --border: #eaeaea; --blue-700: #06f; }
+@media (prefers-color-scheme: dark) { :root { --border: #2e2e2e; } body { background: #000; } }
+#view-switch { border-radius: 6px; }
+#view-switch button { border-radius: 6px; }
+</style>
 </head><body data-view="human">
 <nav id="view-switch"><button data-set-view="human" aria-pressed="true">Human</button><button data-set-view="agent" aria-pressed="false">Agent</button></nav>
 <section id="human-view" data-job-to-be-done="Understand the research purpose">
@@ -273,6 +282,18 @@ test("artifact validator accepts the portable two-view contract and rejects an A
   const valid = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
   assert.equal(valid.status, 0, failureMessage(valid));
   assert.match(valid.stdout, /Artifact validation passed/);
+
+  const frameless = html
+    .replace("--wide: 68rem;", "")
+    .replace("--read: 40rem;", "")
+    .replaceAll("#eaeaea", "#e6e6e6")
+    .replaceAll("#2e2e2e", "#292929")
+    .replaceAll("border-radius: 6px;", "border-radius: 0;");
+  await fs.writeFile(indexPath, frameless);
+  const missingFrame = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
+  assert.equal(missingFrame.status, 1, "validator should reject a page that drops the layout frame");
+  assert.match(missingFrame.stderr, /--wide: 68rem/);
+  await fs.writeFile(indexPath, html);
 
   await fs.writeFile(indexPath, html.replace('data-view="human"', 'data-view="agent"'));
   const invalid = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
@@ -315,3 +336,33 @@ async function findNamed(root, name) {
   }
   return matches;
 }
+
+test("graph links wiki pages across folders and tolerates an empty workspace", async (t) => {
+  const { buildGraph } = await import("./engram-graph.mjs");
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "engram-graph-"));
+  t.after(() => fs.rm(tempRoot, { recursive: true, force: true }));
+
+  assert.deepEqual((await buildGraph(tempRoot)).nodes, []);
+
+  const wiki = path.join(tempRoot, "wiki", "main");
+  await fs.mkdir(path.join(wiki, "concepts"), { recursive: true });
+  await fs.mkdir(path.join(wiki, "sources"), { recursive: true });
+  await fs.mkdir(path.join(wiki, "raw"), { recursive: true });
+  await fs.writeFile(path.join(wiki, "concepts", "alpha.md"), "---\ntitle: Alpha\ntags: [one, two]\n---\n# Alpha\n\n## Summary\n\nSee [[beta|Beta]] and [[../sources/Paper]].\n");
+  await fs.writeFile(path.join(wiki, "concepts", "beta.md"), "# Beta\n\nLinks back to [[alpha#Summary]].\n");
+  await fs.writeFile(path.join(wiki, "sources", "Paper.md"), "# Paper\n");
+  await fs.writeFile(path.join(wiki, "raw", "original.md"), "[[alpha]]\n");
+  await fs.writeFile(path.join(wiki, "index.md"), "[[alpha]]\n");
+
+  const graph = await buildGraph(tempRoot);
+  const { writeGraphPage } = await import("./engram-graph.mjs");
+  const page = await fs.readFile(await writeGraphPage(tempRoot), "utf8");
+  assert.match(page, /"concepts\/alpha"/);
+  assert.doesNotMatch(page, /GRAPH_DATA/);
+  assert.deepEqual(graph.nodes.map((node) => node.id).sort(), ["concepts/alpha", "concepts/beta", "sources/Paper"]);
+  assert.equal(graph.links.length, 2);
+  const alpha = graph.nodes.find((node) => node.id === "concepts/alpha");
+  assert.deepEqual(alpha.tags, ["one", "two"]);
+  assert.equal(alpha.summary, "See Beta and Paper.");
+  assert.equal(alpha.degree, 2);
+});

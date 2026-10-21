@@ -1,9 +1,10 @@
 # Automatic agent-skill discovery
 
-This is Apollo system maintenance for an explicitly enabled workspace pilot.
-It learns candidate agent procedures from recurring tasks. It does not invoke
-the human-skill workflow. Ordinary conversations require no capture, reflection,
-or skill-creation prompt from the user.
+This pilot follows this workflow only. It does not switch into the
+structure-role read order of [Apollo](../agents/apollo.md). It learns candidate agent
+procedures from recurring tasks in an explicitly enabled workspace. It does not
+invoke the human-skill workflow. Ordinary conversations require no capture,
+reflection, or skill-creation prompt from the user.
 
 ## Enablement and storage
 
@@ -167,7 +168,7 @@ draft or diff. Ask only for activation approval, not for permission to perform
 capture, cleaning, reflection, drafting, or isolated evaluation already enabled.
 
 Approval to collect and draft is not approval to install every future skill.
-Activation follows Apollo's existing align gate against the current files,
+Activation follows the align gate of the structure role, [Apollo](../agents/apollo.md), against the current files,
 including ordinary verification and repository boundaries. Keep drafts outside
 discovered skill folders until then. An approved personal skill remains private;
 public export requires inspected generic contents and the normal export process.
