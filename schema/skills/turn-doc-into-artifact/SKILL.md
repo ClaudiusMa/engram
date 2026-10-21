@@ -37,7 +37,7 @@ Read the nearest `AGENTS.md` and obey its privacy and editing rules.
 In the Engram artifact workspace:
 
 1. Read `artifact/_brand/design.md`, `artifact/_brand/design.dark.md`, and `artifact/_brand/BUILD-INSTRUCTIONS.md`.
-2. If `artifact/_brand/precedent.md` exists, read it and inspect the visual precedent it names. Use it only for layout and restraint guidance, never as content evidence.
+2. Read `artifact/_brand/precedent.md` and open `artifact/_brand/layout.html`. Start the page from that frame: pill switch, identity line, 68rem shell, 32px title, lead, and 40rem reading measure. Sections stack in that column. Copy the quote, note, chain, list, and table blocks when the source needs them. Omit a block the source does not need. Do not invent a different frame. The file is layout, not content. Use `design.md` only for a color or type role the layout file does not show.
 3. Place new work directly at `artifact/<Artifact Name>/`. Use ProductLab only when the user explicitly requests that integration and destination.
 4. Reference the shared logo through `branding/logo.svg`; do not copy or redraw it.
 
@@ -75,6 +75,8 @@ Render the complete document faithfully. Improve navigation and visual hierarchy
 
 Tell the story in the user's direct, conversational tone. Infer tone only from the source and current conversation; never invent a persona from unrelated material.
 
+Before writing Human-view prose, read and apply [`schema/skills/humanize-writing/SKILL.md`](../humanize-writing/SKILL.md). That skill edits voice. It does not change this contract, source fidelity, or the ban on invented opinions. Engram voice rules win where the upstream humanize practice would add personality the user did not record. The writing pass edits sentences inside the frame. It does not remove the shell, the switch, the identity line, or the reading measure.
+
 The opening must give the brief answer to the artifact's job to be done. The title is an answer, not a topic label, atmospheric tagline, or description of the artifact. The lead states the supported mechanism, decision, or boundary that makes the answer true.
 
 For every source stage, tell the smallest grounded story that answers:
@@ -102,7 +104,7 @@ Before adding non-neutral color, write down what it means. Remove it if that mea
 - Never give ordinary sections different colors merely to make them look different.
 - Avoid decorative tinted cards, rainbow borders, colored shadows, glow, and gradients.
 - Use a visualization only when it materially clarifies composition, comparison, sequence, or causality.
-- Match the restraint of the nominated precedent without copying its content or forcing its layout onto a different story.
+- Build the page from `artifact/_brand/layout.html`. Keep its switch, identity line, shell, title size, and reading measure. Change the words. Omit a block the source does not need.
 
 One legend may encode only one named semantic dimension whose values are peers. Verification status, roadmap position, optionality, and unresolvedness are different dimensions and must not share one legend. If an item could truthfully carry two labels at once, those labels are not mutually exclusive values of one dimension; separate the dimensions, label them locally, or remove the legend.
 
@@ -136,6 +138,7 @@ Then preview desktop and mobile widths. Verify:
 - facts, decisions, alternatives, and unresolved items retain their status;
 - light and dark modes remain legible;
 - no overflow, clipped controls, broken logo, console errors, or placeholder text remains;
+- the page keeps the layout frame: `--wide: 68rem`, a `--read` measure, a non-zero radius on the view switch, light border `#eaeaea`, and dark border `#2e2e2e`;
 - every use of color has an explicit purpose;
 - every legend, when present, contains values from one named semantic dimension.
 

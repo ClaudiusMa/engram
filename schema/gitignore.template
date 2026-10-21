@@ -31,3 +31,6 @@
 # macOS Finder metadata. Re-excluded after the allowlists above so these never
 # slip into tracked folders like schema/ regardless of the !/schema/** rule.
 .DS_Store
+
+# New upstream versions of files you changed, saved by Engram updates.
+*.engram-new

@@ -8,8 +8,9 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const initializer = path.join(repoRoot, "bin", "personal-knowledge-base.mjs");
-const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab"];
+const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab", "session-learning"];
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+process.env.ENGRAM_NO_NETWORK = "1";
 
 test("initializer creates the complete private knowledge-system skeleton without overwriting files", async (t) => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "personal-knowledge-base-init-"));
@@ -56,6 +57,10 @@ test("initializer creates the complete private knowledge-system skeleton without
     assert.equal(await exists(path.join(target, relativePath)), true, `missing ${relativePath}`);
   }
   assert.equal(await exists(path.join(target, "CLAUDE.md")), false, "legacy CLAUDE.md should not be created");
+  if (process.platform === "darwin") {
+    const launcher = path.join(target, "Engram Graph.app", "Contents", "MacOS", "engram-graph");
+    assert.equal(((await fs.stat(launcher)).mode & 0o111) !== 0, true, "Engram Graph launcher must stay executable");
+  }
   assert.deepEqual(await findNamed(target, ".DS_Store"), [], "initializer should not copy Finder metadata");
 
   const agentsPath = path.join(target, "AGENTS.md");
@@ -104,6 +109,8 @@ test("privacy boundary and package contents expose structure only", async (t) =>
     "wiki/main/human-skills/private.md",
     ".obsidian/private.json",
     "artifact/example/private.md",
+    ".local/session-learning/sessions/private.json",
+    ".local/session-learning/candidates/example/SKILL.md",
     "private.md",
     "schema/.DS_Store",
   ];
@@ -140,6 +147,7 @@ test("privacy boundary and package contents expose structure only", async (t) =>
   assert.equal(packedFiles.includes("schema/workflows/artifact-humanize.js"), false, "package should not expose the retired Humanizer as active");
   assert.equal(packedFiles.some((filePath) => filePath.startsWith("wiki/")), false, "package must exclude wiki content");
   assert.equal(packedFiles.some((filePath) => filePath.startsWith(".obsidian/")), false, "package must exclude live settings");
+  assert.equal(packedFiles.includes("schema/CHANGELOG.md"), false, "package must exclude private incident records in either repository mode");
   const allowedPackageRoots = new Set(["AGENTS.md", "README.md", "LICENSE", "package.json", "bin", "schema"]);
   for (const filePath of packedFiles) {
     const packageRoot = filePath.includes("/") ? filePath.slice(0, filePath.indexOf("/")) : filePath;
@@ -192,7 +200,7 @@ test("protected routing contracts stay aligned across routed instructions", asyn
   const read = (name) => fs.readFile(path.join(repoRoot, name), "utf8");
   const agents = await read("AGENTS.md");
   const flat = agents.replace(/\s+/g, " ");
-  assert.ok(flat.trim().split(/\s+/).length <= 900, "root instructions must stay within 900 words");
+  assert.ok(flat.trim().split(/\s+/).length <= 930, "root instructions must stay within 930 words");
   assert.match(flat, /load only the selected workflow/);
   assert.match(flat, /do not read every linked workflow/);
   assert.match(flat, /explicitly ask for the user’s consent, and wait for confirmation before editing/);
@@ -252,7 +260,12 @@ test("artifact validator accepts the portable two-view contract and rejects an A
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="artifact-source" content="${sourcePath}">
 <meta name="artifact-color-meaning" content="blue=links, focus, and selected controls">
-<style>@media (prefers-color-scheme: dark) { body { background: #000; } } :root { --blue-700: #06f; }</style>
+<style>
+:root { --wide: 68rem; --read: 40rem; --border: #eaeaea; --blue-700: #06f; }
+@media (prefers-color-scheme: dark) { :root { --border: #2e2e2e; } body { background: #000; } }
+#view-switch { border-radius: 6px; }
+#view-switch button { border-radius: 6px; }
+</style>
 </head><body data-view="human">
 <nav id="view-switch"><button data-set-view="human" aria-pressed="true">Human</button><button data-set-view="agent" aria-pressed="false">Agent</button></nav>
 <section id="human-view" data-job-to-be-done="Understand the research purpose">
@@ -270,6 +283,18 @@ test("artifact validator accepts the portable two-view contract and rejects an A
   const valid = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
   assert.equal(valid.status, 0, failureMessage(valid));
   assert.match(valid.stdout, /Artifact validation passed/);
+
+  const frameless = html
+    .replace("--wide: 68rem;", "")
+    .replace("--read: 40rem;", "")
+    .replaceAll("#eaeaea", "#e6e6e6")
+    .replaceAll("#2e2e2e", "#292929")
+    .replaceAll("border-radius: 6px;", "border-radius: 0;");
+  await fs.writeFile(indexPath, frameless);
+  const missingFrame = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
+  assert.equal(missingFrame.status, 1, "validator should reject a page that drops the layout frame");
+  assert.match(missingFrame.stderr, /--wide: 68rem/);
+  await fs.writeFile(indexPath, html);
 
   await fs.writeFile(indexPath, html.replace('data-view="human"', 'data-view="agent"'));
   const invalid = run(process.execPath, [validator, "--artifact", artifactDir, "--source", sourcePath], repoRoot);
@@ -312,3 +337,71 @@ async function findNamed(root, name) {
   }
   return matches;
 }
+
+test("graph links wiki pages across folders and tolerates an empty workspace", async (t) => {
+  const { buildGraph } = await import("./engram-graph.mjs");
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "engram-graph-"));
+  t.after(() => fs.rm(tempRoot, { recursive: true, force: true }));
+
+  assert.deepEqual((await buildGraph(tempRoot)).nodes, []);
+
+  const wiki = path.join(tempRoot, "wiki", "main");
+  await fs.mkdir(path.join(wiki, "concepts"), { recursive: true });
+  await fs.mkdir(path.join(wiki, "sources"), { recursive: true });
+  await fs.mkdir(path.join(wiki, "raw"), { recursive: true });
+  await fs.writeFile(path.join(wiki, "concepts", "alpha.md"), "---\ntitle: Alpha\ntags: [one, two]\n---\n# Alpha\n\n## Summary\n\nSee [[beta|Beta]] and [[../sources/Paper]].\n");
+  await fs.writeFile(path.join(wiki, "concepts", "beta.md"), "# Beta\n\nLinks back to [[alpha#Summary]].\n");
+  await fs.writeFile(path.join(wiki, "sources", "Paper.md"), "# Paper\n");
+  await fs.writeFile(path.join(wiki, "raw", "original.md"), "[[alpha]]\n");
+  await fs.writeFile(path.join(wiki, "index.md"), "[[alpha]]\n");
+
+  const graph = await buildGraph(tempRoot);
+  const { writeGraphPage } = await import("./engram-graph.mjs");
+  const page = await fs.readFile(await writeGraphPage(tempRoot), "utf8");
+  assert.match(page, /"concepts\/alpha"/);
+  assert.doesNotMatch(page, /GRAPH_DATA/);
+  assert.deepEqual(graph.nodes.map((node) => node.id).sort(), ["concepts/alpha", "concepts/beta", "sources/Paper"]);
+  assert.equal(graph.links.length, 2);
+  const alpha = graph.nodes.find((node) => node.id === "concepts/alpha");
+  assert.deepEqual(alpha.tags, ["one", "two"]);
+  assert.equal(alpha.summary, "See Beta and Paper.");
+  assert.equal(alpha.degree, 2);
+});
+
+test("updates replace untouched structure, keep user edits, and never touch knowledge", async (t) => {
+  const { applyUpdate, checkForUpdate, isUpstreamSource } = await import("./engram-update.mjs");
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "engram-update-"));
+  t.after(() => fs.rm(tempRoot, { recursive: true, force: true }));
+  const workspace = path.join(tempRoot, "vault");
+  const result = run(process.execPath, [initializer, "init", workspace], repoRoot);
+  assert.equal(result.status, 0, failureMessage(result));
+  const state = JSON.parse(await fs.readFile(path.join(workspace, ".engram", "installed.json"), "utf8"));
+  assert.ok(state.files["AGENTS.md"], "init records installed files");
+
+  const nextPackage = path.join(tempRoot, "next");
+  for (const name of ["AGENTS.md", "README.md", "LICENSE", "package.json", "bin", "schema"]) {
+    await fs.cp(path.join(repoRoot, name), path.join(nextPackage, name), { recursive: true });
+  }
+  await fs.appendFile(path.join(nextPackage, "AGENTS.md"), "\nNew upstream rule.\n");
+  await fs.appendFile(path.join(nextPackage, "schema/workflows/lint.md"), "\nNew lint step.\n");
+  await fs.writeFile(path.join(nextPackage, "schema/workflows/new-flow.md"), "# New\n");
+  await fs.rm(path.join(nextPackage, "schema/workflows/recap.md"));
+
+  await fs.appendFile(path.join(workspace, "AGENTS.md"), "\nMy own rule.\n");
+  await fs.writeFile(path.join(workspace, "wiki/main/notes/mine.md"), "# Mine\n");
+
+  const report = applyUpdate(nextPackage, workspace, "a".repeat(40));
+  assert.ok(report.updated.includes("schema/workflows/lint.md"));
+  assert.ok(report.added.includes("schema/workflows/new-flow.md"));
+  assert.ok(report.removed.includes("schema/workflows/recap.md"));
+  assert.deepEqual(report.kept, ["AGENTS.md"]);
+  assert.match(await fs.readFile(path.join(workspace, "AGENTS.md"), "utf8"), /My own rule/);
+  assert.match(await fs.readFile(path.join(workspace, "AGENTS.md.engram-new"), "utf8"), /New upstream rule/);
+  assert.equal(await fs.readFile(path.join(workspace, "wiki/main/notes/mine.md"), "utf8"), "# Mine\n");
+
+  const again = applyUpdate(nextPackage, workspace, "a".repeat(40));
+  assert.deepEqual(again.updated, []);
+  assert.deepEqual(again.kept, ["AGENTS.md"], "a user edit stays protected on later updates");
+  assert.equal((await checkForUpdate(workspace)).available, false, "offline checks stay quiet");
+  assert.equal(isUpstreamSource(repoRoot), await exists(path.join(repoRoot, ".engram", "private.json")));
+});

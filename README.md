@@ -1,213 +1,137 @@
 # Engram
 
-A private, LLM-maintained knowledge system with a reusable public structure. Works with any Markdown-compatible frontend platform.
+**Your mind, 10x. An AI memory that connects everything you have ever learned to what you are thinking about now.**
 
-The core idea is that an LLM should not repeatedly rediscover your knowledge from raw files. Instead, it incrementally maintains a persistent wiki: source pages, concept pages, entity pages, position pages, question pages, an index, and a log. The wiki compounds over time.
+If your job runs on knowledge, you read, meet, and think far more than one head can hold. The paper you read three years ago may be exactly what today's idea needs, but you will not remember it. Engram remembers it for you and makes the connection.
 
-![Engram as a personal knowledge system](assets/engram-overview.png)
+![Engram as a memory upgrade for a human working with AI](assets/engram-overview.png)
 
-This repository contains the public structure only. Your actual knowledge stays under the gitignored `wiki/` boundary and is never included in the public repository.
+## Old knowledge, new ideas
 
-## Quick Start
+![Engram Graph: a current idea connected to a 2021 paper, a 2022 talk, a 2024 customer interview, and a note from last week](assets/engram-graph-demo.png)
 
-Create or `cd` into the folder you want to use as your knowledge system, then run:
+*A sample Engram. Priya, a product lead, is shaping a new idea: onboarding that adapts to how confident people feel. Engram connected it to a paper she saved in 2021, a conference talk from 2022, a customer interview from 2024, and a note she wrote last week. She had long forgotten most of them.*
 
-```sh
-npx github:ClaudiusMa/engram init
-```
+Every dot is a page your AI wrote and keeps up to date. Every line is a connection it found. Click any dot to see everything that feeds into it.
 
-## Privacy Model
+## How it works
 
-GitHub holds structure, not content.
+1. **Capture as you go.** Papers, articles, talks, meetings, customer interviews, your own notes. One sentence is enough: *"Digest this."* Your AI keeps the original and writes a short page about it.
+2. **Engram connects it to everything you already have.** Each new thing is linked to the ideas, people, open questions, and projects already in your Engram, no matter how long ago you saved them.
+3. **Your past shows up when you need it.** Working on something new? Ask *"What do I already know that relates to this?"* Your AI answers from your own Engram and shows where each piece came from: the 2021 paper, the customer quote, last week's note.
+4. **See your thinking.** Open **Engram Graph** to see how it all connects, and which ideas keep coming back.
 
-Private content lives under:
+The more you add, the more it can connect. Every new source makes your old ones more useful.
 
-```text
-wiki/
-```
+## What Engram keeps
 
-That folder is ignored by git. Private content includes:
+| | Kind | What it holds | In Priya's Engram |
+| --- | --- | --- | --- |
+| 🔴 | **Ideas** | Concepts you keep running into | *Self-efficacy*, *Progressive disclosure*, *Habit loops* |
+| 🔵 | **People & things** | Colleagues, customers, companies, tools | *Dana (customer)*, *Marco (engineering lead)* |
+| ⚫ | **Stances** | What you believe, in your words | *Confidence predicts retention better than motivation* |
+| 🟠 | **Open questions** | Things you are still figuring out | *Why do new users drop off on day 3?* |
+| 🟢 | **Projects** | What you are working toward | *Adaptive onboarding*, *Q1 retention push* |
+| ⚪ | **Sources** | Papers, talks, interviews, meeting notes, articles | *Paper (2021): Confidence and Follow-through* |
+| 🟣 | **My notes** | Your own writing, kept exactly as you wrote it | *Onboarding as a conversation* |
 
-- raw source files
-- source URLs
-- source summaries
-- personal takes
-- sparks
-- entity pages
-- concept pages
-- position pages
-- question pages
-- `index.md`
-- `log.md`
+## Things you can say
 
-The `.gitignore` uses a whitelist approach: ignore everything by default, then explicitly allow only the public structure files.
+| You say | Engram does |
+| --- | --- |
+| "What do I already know that relates to this idea?" | Pulls together your past sources, ideas, and notes on it, and says where each came from |
+| "Digest this paper." | Saves the original, writes a page, links it to what you already have, then asks what stood out to you |
+| "File this as a note: …" | Saves your words as a note, untouched |
+| "What have I read about onboarding?" | Answers from your own pages, with links |
+| "What changed this week?" | Writes a short weekly recap |
+| "Check my Engram for loose ends." | Finds stale pages, missing links, and contradictions |
 
-## What Is Tracked
+## Get started
 
-```text
-.
-├── AGENTS.md
-├── README.md
-├── LICENSE
-├── .gitignore
-├── package.json
-├── artifact/
-│   └── README.md
-├── bin/
-│   ├── personal-knowledge-base.mjs
-│   └── personal-knowledge-base.test.mjs
-└── schema/
-    ├── gitignore.template
-    ├── CHANGELOG.md
-    ├── agents/
-    │   └── apollo.md
-    ├── skills/
-    │   └── turn-doc-into-artifact/
-    │       ├── SKILL.md
-    │       ├── references/
-    │       │   └── artifact-contract.md
-    │       └── scripts/
-    │           └── validate-artifact.mjs
-    ├── obsidian/
-    │   ├── app.json
-    │   ├── graph.json
-    │   └── types.json
-    ├── workflows/
-    │   ├── artifact.md
-    │   ├── artifact-sync.js
-    │   ├── artifact-sync.md
-    │   ├── clean-transcript.md
-    │   ├── connect-project.md
-    │   ├── human-skill.md
-    │   ├── ingest.md
-    │   ├── lint.md
-    │   ├── note.md
-    │   ├── page-rules.md
-    │   ├── productlab.md
-    │   ├── productlab-migration.md
-    │   ├── project-decision-housekeeper.md
-    │   ├── query.md
-    │   ├── recap.md
-    │   └── archive/
-    │       └── artifact-humanize-v1.js
-    └── templates/
-        ├── index.template.md
-        ├── log.template.md
-        ├── source.template.md
-        ├── note.template.md
-        ├── human-skill.template.md
-        ├── human-skills-index.template.md
-        ├── entity.template.md
-        ├── concept.template.md
-        ├── position.template.md
-        ├── question.template.md
-        ├── project-link.template.json
-        └── project.template.md
-```
+You need a computer, about ten minutes, and an AI app that can work with files in a folder (for example Claude, Codex, or Cursor).
 
-## What Is Ignored
+1. **Install Node.js** from [nodejs.org](https://nodejs.org/en/download). You only do this once.
+2. **Create your Engram.** Open Terminal (on Windows, PowerShell), paste this line, and press Enter:
+
+   ```sh
+   npx github:ClaudiusMa/engram init ~/Engram
+   ```
+
+   This makes a folder called **Engram** in your home folder.
+3. **Open that folder in your AI app** and say: *"Read AGENTS.md and help me get started."*
+4. **Save your first thing:** *"Digest this article: (paste a link)"*.
+5. **See your map:** on a Mac, double-click **Engram Graph** inside your Engram folder. (Elsewhere, ask your AI to run `npm run graph`.)
+
+## Your knowledge stays yours
+
+- Everything lives in plain files in your own folder. No account and no Engram server.
+- What you save is never uploaded by Engram. If you use Git, your knowledge folder is excluded from the shareable part by default.
+- Your originals are never changed or deleted. Your own notes and takes are never rewritten with ideas you did not have.
+- The files are ordinary Markdown, so you can read them in any notes app, and they outlive any one tool.
+
+## Staying up to date
+
+Engram checks for improvements on its own: when you open **Engram Graph**, and when your AI starts a session. If an update is ready, it tells you and waits. **Nothing is installed until you say OK.**
+
+An update only changes how Engram works. Your notes, sources, and pages are never touched. If you changed one of Engram's own instruction files, your version is kept, and the new one is saved beside it for your AI to merge with you.
+
+Set up Engram before updates existed? Run the step 2 command once more in your Engram folder (`npx github:ClaudiusMa/engram init .`). It adds anything new and leaves your files alone.
+
+<details>
+<summary><strong>For builders: how Engram is put together</strong></summary>
+
+### The idea
+
+An LLM should not rediscover your knowledge from raw files every time. Instead it maintains a persistent wiki of plain Markdown: source pages, concept, entity, position, question, and project pages, an index, and a log. `AGENTS.md` routes each request to one workflow in `schema/workflows/`. No database, plugins, or vector search are required.
+
+### Folder layout
 
 ```text
-wiki/
-└── main/
+Engram/
+├── AGENTS.md            # entry point every agent reads
+├── Engram Graph.app     # double-click map (macOS)
+├── bin/                 # setup, graph, and update tools
+├── schema/              # workflows, templates, skills
+├── artifact/            # temporary AI-made outputs (private)
+└── wiki/main/           # your knowledge (private)
+    ├── raw/             # originals, the source of truth
+    ├── sources/  notes/  concepts/  entities/
+    ├── positions/  questions/  projects/  human-skills/
     ├── index.md
-    ├── log.md
-    ├── raw/          # original source files (the source of truth)
-    ├── sources/
-    ├── notes/
-    ├── human-skills/ # private human-executed playbooks + compact routing registry
-    ├── entities/
-    ├── concepts/
-    ├── positions/
-    ├── questions/
-    └── projects/     # pointers to external projects (path/repo, never the content)
+    └── log.md
 ```
 
-## Page Types
+### Page types
 
-- `source`: an annotation layer for one ingested source. References the original file in `wiki/main/raw/` via the `file:` frontmatter and a `## Source` embed. Contains a factual `## What's in this source` index and the user's optional, confirmed `## My take`. The original file is the source of truth; the source page never duplicates its content.
-- `note`: user-authored content — meeting notes, reading reactions, journals, scratch thoughts. The whole body is the user's voice. Lives at `wiki/main/notes/`. Digest requests always use source ingest instead.
-- `human-skill`: a private, user-owned playbook for a capability the human performs. The agent retrieves it only after a dedicated intent gate and updates it only after the user approves a proposed change. Lives at `wiki/main/human-skills/`; it is not an agent `SKILL.md`.
-- `entity`: a concrete recurring thing
-- `concept`: a neutral idea, term, pattern, or framework
-- `position`: a personal claim or sustained view
-- `question`: an unresolved question being tracked
-- `project`: a private pointer to a living external project, created on explicit request. Recorded annotations may be cited; live project reads and ProductLab catalog resolution require explicit activation of the optional integration.
+- `source`: an annotation of one original in `raw/` (`file:` frontmatter plus a `## Source` embed), with a factual `## What's in this source` and the user's confirmed `## My take`. It never copies the original.
+- `note`: user-authored text; the body is the user's voice. Digest requests always become sources, never notes.
+- `concept` (idea), `entity` (person or thing), `position` (stance), `question`, `project` (a pointer to an external project, never its content).
+- `human-skill`: a private playbook for something the human practices, loaded only through its own intent gate.
 
-Position pages are intentionally separate from concept pages. Concepts describe ideas. Positions capture what the owner currently believes about those ideas.
+### Workflows
 
-## Workflows
+Ingest, note, clean transcript, query, lint, recap, artifact, artifact sync, connect project, human skill, and optional ProductLab integration. Each lives in `schema/workflows/`. System edits require showing the change and getting the user's consent first.
 
-### Ingest
+### Privacy model
 
-Every request to digest a website, paper, file, or supplied text uses source ingest; it never becomes a note or an automatic companion artifact. The detailed procedure is in `schema/workflows/ingest.md`; shared page and intake rules are in `schema/workflows/page-rules.md`. Contradiction auditing remains a separate lint operation.
+In a default install the `.gitignore` ignores everything, then allows only public structure (`AGENTS.md`, `README.md`, `LICENSE`, `package.json`, `bin/`, `schema/`). `wiki/` and `artifact/` stay local.
 
-### Query
+### Graph and updates
 
-The LLM reads the private index first, then relevant pages, then answers from the wiki. Durable synthesis can be promoted into a concept, position, or question page when the user approves. See `schema/workflows/query.md`.
+- `npm run graph` (or the app) scans `wiki/main/` and writes a self-contained page to the system temp folder. `raw/`, `human-skills/`, `index.md`, and `log.md` are left out.
+- `node bin/engram-update.mjs check|apply|later` checks GitHub at most about once a day, installs only on request, and records installed file fingerprints in `.engram/installed.json` to tell user edits from untouched files.
 
-### Human skills
+### Frontend notes
 
-Human skills externalize practices the user wants to improve through repeated experience. Routing is progressive: ordinary requests never load the skill registry; an explicit human-skill request or an immediate request to perform or reflect on a repeatable human activity may read the compact registry, select at most one direct match, and then load only that skill. The current playbook is authoritative, iteration history stays compact, and no reflection becomes guidance until the user approves the change.
+Markdown stays plain: `[[wikilinks]]` and `![[embeds]]`, no plugin syntax. The initializer ships conservative Obsidian defaults. Hide `raw/`, `index.md`, `log.md`, `artifact/`, and structure files from any graph view.
 
-### Lint
-
-The LLM periodically checks for stale pages, missing links, contradictions, orphan pages, missing index entries, and confirmed takes that should be promoted.
-
-### Artifacts
-
-The Engram router sends requests to turn a complete research, analysis, or decision document into a visual artifact to `schema/skills/turn-doc-into-artifact/SKILL.md`. New outputs live directly at `artifact/<name>/`; a single working document may live at `artifact/<Name>.md`. The artifact folder is already temporary. `artifact/_brand/` remains the permanent build guide. Existing outputs are preserved until the user requests a move or cleanup.
-
-### Optional ProductLab integration
-
-ProductLab behaves as an opt-in extension, disabled by default. Only an explicit request to connect, read, sync, or move work through ProductLab loads `schema/workflows/productlab.md`. Engram agents otherwise create artifacts locally without catalog reads, ownership classification, or migration. A complex artifact can move to ProductLab when the user chooses to move it.
-
-### Workflow protection
-
-`AGENTS.md` contains protected routing cases for digest, note, artifact, and optional integrations. System edits must identify affected before/after behavior, explicitly ask for the user's consent and wait for confirmation before changing behavior, preserve unrelated routes, and verify linked instructions and initializer defaults. Historical instructions cannot silently override the current contract.
-
-## Direction
-
-The long-term goal is a dedicated frontend for *reading* the wiki — built around how a human consumes source-derived knowledge, not how a graph database stores it. Implications for current ingest decisions:
-
-- **Concepts as retrieval tags.** Concept pages stay lean and tag-like (one-line definition, list of inbound sources, a few wikilinks to adjacent concepts). The future frontend will use concepts as the primary retrieval key, so heavy prose makes retrieval noisy.
-- **Related pages → "you might also be interested."** Each source page's `## Related pages` section is the foundation for a recommended-next-read block in the future frontend.
-- **Frontend independence.** Markdown stays plain — avoid platform-specific plugin syntax (Dataview, advanced templating). `[[wikilinks]]` and `![[embeds]]` are kept since they're the link primitive of the system.
-- **Meta-bookkeeping excluded from graph view.** `wiki/main/raw/`, `wiki/main/index.md`, `wiki/main/log.md`, and the human-skill routing registry at `wiki/main/human-skills/index.md` are filtered out of graph rendering in whatever frontend platform is used.
-- **Generated artifacts excluded from graph and frontend.** `artifact/` is temporary output and `_brand/` is its build infrastructure; neither is knowledge to ingest. Both remain hidden from the frontend and graph. Moving an artifact outside Engram requires an explicit user request.
-
-## Frontend Platform Defaults
-
-The knowledge schema stays plain Markdown and can be read by any Markdown-compatible frontend. The initializer also ships conservative Obsidian defaults for link maintenance, graph filtering, and property types.
-
-The following structural paths should be excluded from your frontend's graph view, search, and navigation so they don't pollute the knowledge graph:
-
-- `AGENTS.md`
-- `README.md`
-- `LICENSE`
-- `package.json`
-- `.gitignore`
-- `schema/`
-- `bin/`
-- `artifact/`
-
-Additionally, hiding `wiki/main/raw/` from graph view prevents duplicate nodes (one for the original file, one for the source page that annotates it). Raw files remain fully searchable, openable, and embeddable — they are only hidden from the visual graph.
-
-## Using This With an LLM Agent
-
-Point your LLM agent at the knowledge system directory and tell it to follow `AGENTS.md`. The schema is intentionally plain Markdown. No plugins, databases, vector search, or static-site tooling are required at the start.
-
-Start with one broad wiki. Add structure only when real friction appears.
-
-## Verify the Setup
-
-Run the dependency-free initializer smoke test after changing the public schema or setup logic:
+### Verify
 
 ```sh
 npm test
 ```
 
-The test creates a temporary vault, verifies required folders and Obsidian defaults, checks idempotency, and confirms private content remains ignored.
+</details>
 
 ## License
 

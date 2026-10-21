@@ -119,6 +119,12 @@ if (colorMeta && colorMeta.trim().toLowerCase() !== "none") {
 if (accents.length > 3) warnings.push(`artifact declares ${accents.length} accent families; verify each is necessary`);
 if (/\b(?:linear|radial)-gradient\(/i.test(html)) warnings.push("artifact uses gradients; verify they are neutral and necessary");
 
+check(/--wide\s*:\s*68rem/i.test(html), "layout frame must set --wide: 68rem");
+check(/--read\s*:/i.test(html), "layout frame must set a --read measure separate from the shell");
+check(/#eaeaea/i.test(html), "layout frame must use light border #eaeaea");
+check(/#2e2e2e/i.test(html), "layout frame must use dark border #2e2e2e");
+check(viewSwitchHasRadius(html), "view switch must set a non-zero border-radius");
+
 if (errors.length) {
   console.error(`Artifact validation failed (${errors.length}):`);
   for (const error of errors) console.error(`  - ${error}`);
@@ -132,6 +138,18 @@ console.log(`  human sections: ${manifest?.humanSections?.length ?? "unknown"}`)
 console.log(`  agent source sections: ${manifest?.agentSectionsRendered?.length ?? "unknown"}`);
 console.log(`  unresolved items preserved: ${manifest?.unresolvedItems?.length ?? "unknown"}`);
 for (const warning of warnings) console.log(`  ! ${warning}`);
+
+function viewSwitchHasRadius(html) {
+  const blocks = html.match(/#view-switch[^{]*\{[^}]*\}/gi) || [];
+  return blocks.some((block) => {
+    const value = block.match(/border-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    if (!value || /^0(?:px|rem|em|%)?$/i.test(value)) return false;
+    const variable = value.match(/^var\(\s*(--[\w-]+)\s*\)$/i)?.[1];
+    if (!variable) return true;
+    const defined = html.match(new RegExp(`${variable}\\s*:\\s*([^;]+)`, "i"))?.[1]?.trim() || "";
+    return Boolean(defined) && !/^0(?:px|rem|em|%)?$/i.test(defined);
+  });
+}
 
 function parseArgs(args) {
   const parsed = {};

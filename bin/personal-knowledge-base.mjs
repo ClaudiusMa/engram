@@ -14,11 +14,14 @@ const usage = `engram
 
 Usage:
   engram init <target-dir>
+  engram graph [workspace-dir] [--no-open]
+  engram update <workspace-dir>
   engram <target-dir>
 
 Examples:
   npx github:ClaudiusMa/engram init ~/Engram
   npx github:ClaudiusMa/engram init .
+  npm run graph
 `;
 
 const args = process.argv.slice(2);
@@ -28,10 +31,24 @@ if (args.includes("--help") || args.includes("-h")) {
   process.exit(0);
 }
 
-const targetArg = resolveTargetArg(args);
-const targetDir = path.resolve(expandHome(targetArg));
+if (args[0] === "graph") {
+  const { openGraph } = await import("./engram-graph.mjs");
+  const options = args.slice(1);
+  const workspace = options.find((value) => !value.startsWith("--")) ?? ".";
+  console.log(await openGraph(path.resolve(expandHome(workspace)), { open: !options.includes("--no-open") }));
+} else if (args[0] === "update") {
+  const { applyUpdate, describeReport } = await import("./engram-update.mjs");
+  const options = args.slice(1);
+  const commitIndex = options.indexOf("--commit");
+  const commit = commitIndex === -1 ? null : options[commitIndex + 1];
+  const workspace = options.find((value, index) => !value.startsWith("--") && options[index - 1] !== "--commit") ?? ".";
+  console.log(describeReport(applyUpdate(packageRoot, path.resolve(expandHome(workspace)), commit)));
+} else {
+  const targetArg = resolveTargetArg(args);
+  const targetDir = path.resolve(expandHome(targetArg));
 
-await initializeVault(targetDir);
+  await initializeVault(targetDir);
+}
 
 function resolveTargetArg(inputArgs) {
   if (inputArgs.length === 0) {
@@ -72,6 +89,14 @@ async function initializeVault(destination) {
   await copyTreeIfMissing(path.join(packageRoot, "bin"), path.join(destination, "bin"), created, skipped);
   await copyTreeIfMissing(path.join(packageRoot, "schema"), path.join(destination, "schema"), created, skipped);
   await copyFileIfMissing("schema/gitignore.template", path.join(destination, ".gitignore"), created, skipped);
+  if (process.platform === "darwin") {
+    await copyTreeIfMissing(
+      path.join(packageRoot, "schema", "apps", "Engram Graph.app"),
+      path.join(destination, "Engram Graph.app"),
+      created,
+      skipped,
+    );
+  }
 
   const wikiRoot = path.join(destination, "wiki", "main");
   for (const subdir of ["raw", "sources", "notes", "human-skills", "entities", "concepts", "positions", "questions", "projects"]) {
@@ -103,6 +128,9 @@ async function initializeVault(destination) {
     skipped,
   );
 
+  const { latestCommit, recordInstall } = await import("./engram-update.mjs");
+  recordInstall(packageRoot, destination, await latestCommit());
+
   const gitDir = path.join(destination, ".git");
   if (!(await exists(gitDir))) {
     const result = spawnSync("git", ["init"], { cwd: destination, encoding: "utf8" });
@@ -120,7 +148,7 @@ async function initializeVault(destination) {
   printList("Skipped existing", skipped);
   console.log("");
   console.log("Next steps:");
-  console.log("  1. Open this folder as an Obsidian vault.");
+  console.log("  1. Open this folder as an Obsidian vault. On a Mac, double-click Engram Graph to see a map of it.");
   console.log("  2. Point your LLM agent at the vault and tell it to follow AGENTS.md.");
   console.log("  3. Run git status and confirm only public structure is trackable.");
 }
@@ -172,6 +200,7 @@ async function copyTreeIfMissing(sourceDir, destinationDir, created, skipped) {
       }
 
       await fs.copyFile(sourcePath, destinationPath);
+      await fs.chmod(destinationPath, (await fs.stat(sourcePath)).mode);
       created.push(relativeToCwd(destinationPath));
     }
   }

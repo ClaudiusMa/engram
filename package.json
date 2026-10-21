@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "help": "node bin/personal-knowledge-base.mjs --help",
-    "test": "node --test bin/personal-knowledge-base.test.mjs"
+    "graph": "node bin/personal-knowledge-base.mjs graph",
+    "test": "node --test bin/personal-knowledge-base.test.mjs schema/workflows/session-learning.test.mjs"
   },
   "engines": {
     "node": ">=18"

@@ -12,7 +12,9 @@
 
 # Public README illustration.
 !/assets/
+/assets/*
 !/assets/engram-overview.png
+!/assets/engram-graph-demo.png
 
 # Public command-line initializer.
 !/bin/
@@ -35,3 +37,11 @@
 # macOS Finder metadata. Re-excluded after the allowlists above so these never
 # slip into tracked folders like schema/ regardless of the !/schema/** rule.
 .DS_Store
+
+# Existing public artifact shell; artifact content stays private.
+!/artifact/
+/artifact/*
+!/artifact/README.md
+
+# New upstream versions of files you changed, saved by Engram updates.
+*.engram-new
