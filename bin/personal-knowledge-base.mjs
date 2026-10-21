@@ -15,6 +15,7 @@ const usage = `engram
 Usage:
   engram init <target-dir>
   engram graph [workspace-dir] [--no-open]
+  engram update <workspace-dir>
   engram <target-dir>
 
 Examples:
@@ -35,6 +36,13 @@ if (args[0] === "graph") {
   const options = args.slice(1);
   const workspace = options.find((value) => !value.startsWith("--")) ?? ".";
   console.log(await openGraph(path.resolve(expandHome(workspace)), { open: !options.includes("--no-open") }));
+} else if (args[0] === "update") {
+  const { applyUpdate, describeReport } = await import("./engram-update.mjs");
+  const options = args.slice(1);
+  const commitIndex = options.indexOf("--commit");
+  const commit = commitIndex === -1 ? null : options[commitIndex + 1];
+  const workspace = options.find((value, index) => !value.startsWith("--") && options[index - 1] !== "--commit") ?? ".";
+  console.log(describeReport(applyUpdate(packageRoot, path.resolve(expandHome(workspace)), commit)));
 } else {
   const targetArg = resolveTargetArg(args);
   const targetDir = path.resolve(expandHome(targetArg));
@@ -119,6 +127,9 @@ async function initializeVault(destination) {
     created,
     skipped,
   );
+
+  const { latestCommit, recordInstall } = await import("./engram-update.mjs");
+  recordInstall(packageRoot, destination, await latestCommit());
 
   const gitDir = path.join(destination, ".git");
   if (!(await exists(gitDir))) {

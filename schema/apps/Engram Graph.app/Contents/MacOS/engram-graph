@@ -34,3 +34,20 @@ if ! output="$("$NODE" "$SCRIPT" "$ROOT" 2>&1)"; then
   alert "The map could not be built. $(printf '%s' "$output" | tail -n 1)"
   exit 1
 fi
+
+# Offer an Engram update when one is ready. Nothing is installed without the user's OK.
+UPDATER="$ROOT/bin/engram-update.mjs"
+[ -f "$UPDATER" ] || exit 0
+"$NODE" "$UPDATER" check "$ROOT" --json 2>/dev/null | grep -q '"available":true' || exit 0
+choice="$(osascript -e 'button returned of (display dialog "An Engram update is ready." & return & return & "It improves how Engram works. Your notes, sources, and pages are not changed." with title "Engram" buttons {"Later", "Update"} default button "Update")' 2>/dev/null)"
+if [ "$choice" != "Update" ]; then
+  "$NODE" "$UPDATER" later "$ROOT" >/dev/null 2>&1
+  exit 0
+fi
+osascript -e 'display notification "Updating Engram…" with title "Engram"' >/dev/null 2>&1
+if result="$(PATH="$(dirname "$NODE"):$PATH" "$NODE" "$UPDATER" apply "$ROOT" 2>&1)"; then
+  summary="$(printf '%s' "$result" | grep -E "Engram (is|was)|engram-new" | head -n 6)"
+  osascript -e 'on run argv' -e 'display dialog (item 1 of argv) with title "Engram" buttons {"OK"} default button "OK"' -e 'end run' "${summary:-Engram is updated.}" >/dev/null 2>&1
+else
+  alert "Engram could not be updated right now. Check your internet connection and try again later."
+fi

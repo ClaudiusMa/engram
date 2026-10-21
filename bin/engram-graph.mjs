@@ -710,6 +710,8 @@ renderLede(); renderIndex(); renderTop();
 document.getElementById("empty").classList.toggle("show", nodes.length === 0);
 for (let i = 0; i < 250; i++) tick();
 fit(false);
+const linked = byId.get(decodeURIComponent(location.hash.replace(/^#page=/, "")));
+if (linked) { select(linked); flyTo(linked); }
 requestAnimationFrame(frame);
 </script>
 </body>

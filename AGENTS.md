@@ -11,6 +11,9 @@ public structure includes `README.md`, `LICENSE`, `.gitignore`, `package.json`,
 `bin/`, `schema/`, and the tracked `artifact/README.md` shell. Do not add
 tooling unless the user asks or repeated pain justifies it.
 
+At session start, run `node bin/engram-update.mjs check`. If it reports an update, tell
+the user in plain words and install it only after they agree.
+
 Use direct tools for trivial operations. Delegate bounded scans, mechanical edits,
 and test runs to a lower-cost model with low reasoning and only necessary context.
 Keep diagnosis, design decisions, and final review with the main agent.

@@ -14,6 +14,7 @@
 !/assets/
 /assets/*
 !/assets/engram-overview.png
+!/assets/engram-graph-demo.png
 
 # Public command-line initializer.
 !/bin/
@@ -41,3 +42,6 @@
 !/artifact/
 /artifact/*
 !/artifact/README.md
+
+# New upstream versions of files you changed, saved by Engram updates.
+*.engram-new
