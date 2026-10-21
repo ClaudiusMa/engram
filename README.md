@@ -1,45 +1,50 @@
 # Engram
 
-**A memory for you and your AI.** Save what you read, watch, hear, and think. Your AI files it, connects it to what you already know, and remembers it, so every conversation starts from your own knowledge instead of from zero.
+**Your mind, 10x. An AI memory that connects everything you have ever learned to what you are thinking about now.**
+
+If your job runs on knowledge, you read, meet, and think far more than one head can hold. The paper you read three years ago may be exactly what today's idea needs, but you will not remember it. Engram remembers it for you and makes the connection.
 
 ![Engram as a memory upgrade for a human working with AI](assets/engram-overview.png)
 
-## See what's in your head
+## Old knowledge, new ideas
 
-![The Engram Graph: a map of one person's ideas, people, stances, questions, projects, and sources](assets/engram-graph-demo.png)
+![Engram Graph: a current idea connected to a 2021 paper, a 2022 talk, a 2024 customer interview, and a note from last week](assets/engram-graph-demo.png)
 
-*Sample Engram for Mia, who is training for a half-marathon, sleeping better, and writing a short story. Every dot is a page your AI wrote for you. Lines are connections it found. Click a dot to read it.*
+*A sample Engram. Priya, a product lead, is shaping a new idea: onboarding that adapts to how confident people feel. Engram connected it to a paper she saved in 2021, a conference talk from 2022, a customer interview from 2024, and a note she wrote last week. She had long forgotten most of them.*
 
-Each colour is a kind of page:
-
-| | Kind | What it holds | Example from Mia's Engram |
-| --- | --- | --- | --- |
-| 🔴 | **Ideas** | Concepts you keep running into | *Deep work*, *Sleep debt*, *Habit stacking* |
-| 🔵 | **People & things** | People, places, tools, groups | *Sam (running coach)*, *Lisbon*, *Paper notebook* |
-| ⚫ | **Stances** | What you believe, in your words | *Protect the first hour of the day* |
-| 🟠 | **Open questions** | Things you are still figuring out | *Does coffee after 2pm hurt my sleep?* |
-| 🟢 | **Projects** | What you are working toward | *Half-marathon in spring* |
-| ⚪ | **Sources** | Articles, podcasts, books, videos, files you saved | *Podcast: Why We Nap* |
-| 🟣 | **My notes** | Your own writing, kept exactly as you wrote it | *Lisbon trip reflections* |
+Every dot is a page your AI wrote and keeps up to date. Every line is a connection it found. Click any dot to see everything that feeds into it.
 
 ## How it works
 
-1. **Save something.** Give your AI a link, a PDF, a meeting transcript, or a thought: *"Digest this article."*
-2. **Your AI files it.** It keeps the original, writes a short page about it, and links it to the ideas, people, and projects already in your Engram. It asks what *you* think and records your take only after you agree.
-3. **Ask, and see.** Ask questions and get answers from your own saved knowledge, with links back to where each answer came from. Open **Engram Graph** to see everything at a glance.
+1. **Capture as you go.** Papers, articles, talks, meetings, customer interviews, your own notes. One sentence is enough: *"Digest this."* Your AI keeps the original and writes a short page about it.
+2. **Engram connects it to everything you already have.** Each new thing is linked to the ideas, people, open questions, and projects already in your Engram, no matter how long ago you saved them.
+3. **Your past shows up when you need it.** Working on something new? Ask *"What do I already know that relates to this?"* Your AI answers from your own Engram and shows where each piece came from: the 2021 paper, the customer quote, last week's note.
+4. **See your thinking.** Open **Engram Graph** to see how it all connects, and which ideas keep coming back.
 
-Over time your Engram compounds: every new source makes the old ones more useful.
+The more you add, the more it can connect. Every new source makes your old ones more useful.
+
+## What Engram keeps
+
+| | Kind | What it holds | In Priya's Engram |
+| --- | --- | --- | --- |
+| 🔴 | **Ideas** | Concepts you keep running into | *Self-efficacy*, *Progressive disclosure*, *Habit loops* |
+| 🔵 | **People & things** | Colleagues, customers, companies, tools | *Dana (customer)*, *Marco (engineering lead)* |
+| ⚫ | **Stances** | What you believe, in your words | *Confidence predicts retention better than motivation* |
+| 🟠 | **Open questions** | Things you are still figuring out | *Why do new users drop off on day 3?* |
+| 🟢 | **Projects** | What you are working toward | *Adaptive onboarding*, *Q1 retention push* |
+| ⚪ | **Sources** | Papers, talks, interviews, meeting notes, articles | *Paper (2021): Confidence and Follow-through* |
+| 🟣 | **My notes** | Your own writing, kept exactly as you wrote it | *Onboarding as a conversation* |
 
 ## Things you can say
 
 | You say | Engram does |
 | --- | --- |
-| "Digest this podcast transcript." | Saves the original, writes a source page, links it, then asks what stood out to you |
+| "What do I already know that relates to this idea?" | Pulls together your past sources, ideas, and notes on it, and says where each came from |
+| "Digest this paper." | Saves the original, writes a page, links it to what you already have, then asks what stood out to you |
 | "File this as a note: …" | Saves your words as a note, untouched |
-| "What do I know about sleep?" | Answers from your pages, and says which ones |
+| "What have I read about onboarding?" | Answers from your own pages, with links |
 | "What changed this week?" | Writes a short weekly recap |
 | "Check my Engram for loose ends." | Finds stale pages, missing links, and contradictions |
-| "Turn this into a one-page visual." | Builds a shareable page from a finished document |
 
 ## Get started
 
