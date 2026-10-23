@@ -120,9 +120,14 @@ export async function importSelection({ selection, packageFile, shareUrl, target
     const marker = `<!-- engram-sharing:${id} -->`;
     if (!index.includes(marker)) {
       const row = `| [[sources/${pageName.slice(0, -3)}]] | source | ${date} | ${prepared.files.length} selected original file(s); discussion pending. | ${marker}\n`;
-      const position = index.indexOf('\n', index.indexOf('## Sources')) + 1;
-      // Add a bounded catalog block inside Sources; all existing index bytes survive.
-      const addition = `\n| Page | Type | Date | Summary |\n| --- | --- | --- | --- |\n${row}\n`;
+      // Join the existing Sources table when the section already has one (the template does); otherwise add a bounded
+      // catalog block. All existing index bytes survive either way.
+      const sectionStart = index.indexOf('## Sources');
+      const nextHeading = index.indexOf('\n## ', sectionStart + 1);
+      const section = index.slice(sectionStart, nextHeading === -1 ? index.length : nextHeading);
+      const separator = section.match(/^\|\s*-{3,}[^\n]*\n/mu);
+      const position = separator ? sectionStart + separator.index + separator[0].length : index.indexOf('\n', sectionStart) + 1;
+      const addition = separator ? row : `\n| Page | Type | Date | Summary |\n| --- | --- | --- | --- |\n${row}\n`;
       await noSymlinks(indexPath);
       if (await fs.readFile(indexPath, 'utf8') !== index) throw new ShareError('Index changed during import. Retry after other edits finish.');
       await fs.writeFile(indexPath, index.slice(0, position) + addition + index.slice(position));

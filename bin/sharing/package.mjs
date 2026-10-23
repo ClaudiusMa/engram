@@ -24,7 +24,7 @@ export async function noSymlinks(absolute, { allowMissing = false } = {}) {
   let current = path.parse(resolved).root;
   for (const segment of resolved.slice(current.length).split(path.sep).filter(Boolean)) {
     current = path.join(current, segment);
-    try { if ((await fs.lstat(current)).isSymbolicLink()) throw new ShareError('Symbolic links are not allowed.'); }
+    try { if ((await fs.lstat(current)).isSymbolicLink()) throw new ShareError(`Symbolic links are not allowed: ${current} is a link. Use the real path instead (on macOS, /tmp is a link to /private/tmp).`); }
     catch (error) { if (allowMissing && error.code === 'ENOENT') return; throw error; }
   }
 }
