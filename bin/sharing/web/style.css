@@ -1,0 +1,275 @@
+/* Authoring source: artifact/_brand/layout.html and the canonical Geist tokens.
+   Sharing uses the reading frame without unrelated Human/Agent view controls. */
+:root {
+  color-scheme: light;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --wide: 68rem;
+  --read: 40rem;
+  --bg: #ffffff;
+  --border: #eaeaea;
+  --border-strong: #c9c9c9;
+  --text: #171717;
+  --secondary: #4d4d4d;
+  --faint: #8f8f8f;
+  --accent: #006bff;
+  --focus-gap: #ffffff;
+  --hover: #f2f2f2;
+  --active: #ebebeb;
+  --error: #d8001b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #000000;
+    --border: #2e2e2e;
+    --border-strong: #454545;
+    --text: #ededed;
+    --secondary: #a0a0a0;
+    --faint: #8f8f8f;
+    --accent: #47a8ff;
+    --focus-gap: #000000;
+    --hover: #1a1a1a;
+    --active: #1f1f1f;
+    --error: #ff565f;
+  }
+  .identity img { filter: invert(1); }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--secondary);
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+.shell {
+  width: min(var(--wide), calc(100% - 48px));
+  margin: 0 auto;
+  padding: 48px 0 64px;
+}
+.identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 32px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.identity img { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+#context { color: var(--secondary); }
+main { max-width: var(--read); }
+h1, h2, h3, strong, .lede { color: var(--text); }
+h1 {
+  margin: 0 0 16px;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -1.28px;
+  overflow-wrap: anywhere;
+}
+.lede {
+  margin: 0 0 48px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 36px;
+}
+h2 {
+  margin: 64px 0 16px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.96px;
+  overflow-wrap: anywhere;
+}
+h3 {
+  margin: 32px 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.32px;
+}
+p { margin: 0 0 16px; }
+ul { margin: 0 0 16px; padding-left: 1.2em; }
+li + li { margin-top: 8px; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-gap), 0 0 0 4px var(--accent);
+}
+/* Headings receive focus only programmatically (tabindex -1) so announcements land; they are not controls. */
+h1:focus-visible, h2:focus-visible { box-shadow: none; }
+button, input, textarea { font-family: var(--font); }
+button, .button {
+  min-height: 48px;
+  border: 1px solid var(--text);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+button.secondary, .button.secondary {
+  border-color: var(--border-strong);
+  background: var(--bg);
+  color: var(--text);
+}
+button.secondary:hover, .button.secondary:hover { background: var(--hover); }
+button.secondary:active, .button.secondary:active { background: var(--active); }
+button.disclosure {
+  padding-left: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+  justify-content: flex-start;
+  text-align: left;
+}
+button.disclosure:hover { text-decoration: underline; text-underline-offset: 3px; }
+button:disabled {
+  background: var(--hover);
+  border-color: var(--border);
+  color: var(--faint);
+  cursor: not-allowed;
+}
+input, textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+input[aria-invalid="true"] { border-color: var(--error); }
+textarea {
+  min-height: 288px;
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+label { display: block; margin-bottom: 8px; color: var(--text); }
+.meta, .small, .label, .status { font-size: 14px; line-height: 20px; color: var(--secondary); }
+.label { margin-bottom: 8px; }
+.reading-title { margin-top: 0; }
+.prose { white-space: pre-wrap; overflow-wrap: anywhere; }
+.thoughts { border-left: 1px solid var(--border-strong); padding-left: 16px; margin: 32px 0 24px; }
+.thoughts h3 { margin-top: 0; }
+.clip { margin-bottom: 24px; }
+.clip-toggle { margin-top: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.actions > * { min-width: 0; }
+.selection { margin-top: 16px; }
+.selection li { overflow-wrap: anywhere; }
+.status { margin-top: 12px; }
+.status:empty { margin: 0; }
+.error { color: var(--error); }
+.spaced { margin-top: 24px; }
+.link-value { font: 14px/20px var(--mono); overflow-wrap: anywhere; user-select: all; }
+[hidden] { display: none !important; }
+@media (max-width: 600px) {
+  .shell { width: calc(100% - 32px); padding-top: 32px; }
+  h1 { font-size: 24px; line-height: 32px; letter-spacing: -0.96px; }
+  .lede { font-size: 18px; line-height: 28px; }
+  button:not(.disclosure):not(.copy), .button { width: 100%; }
+  .actions { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* Dedicated save steps share the reader's content column and native controls. */
+.step-back { margin-bottom: 24px; }
+.back-link { display: inline-flex; min-height: 44px; align-items: center; }
+.save-choices { display: flex; flex-direction: column; gap: 12px; }
+.save-choices .button { width: 100%; }
+.agent-instruction {
+  display: block;
+  min-height: 0;
+  padding: 16px;
+  margin-bottom: 16px;
+  resize: none;
+  overflow: hidden;
+  field-sizing: content;
+  font: 400 16px/24px var(--font);
+}
+
+/* Recipient document: DialKit's column and palette, per the save-page design contract.
+   Values resolved from joshpuckett.me/dialkit's stylesheets (Tailwind v3): max-w-2xl, px-6 py-16, neutral/stone scale. */
+body.recipient { --secondary: #525252; --faint: #a3a3a3; --block: #fafaf9; --code: #f5f5f4; --command: #404040; --copy-hover: #e5e5e5; --copy-hover-icon: #525252; -moz-osx-font-smoothing: grayscale; }
+@media (prefers-color-scheme: dark) {
+  body.recipient { --bg: #0a0a0a; --text: #f5f5f5; --secondary: #a3a3a3; --faint: #a3a3a3; --block: #262626; --code: #262626; --command: #d4d4d4; --copy-hover: #404040; --copy-hover-icon: #d4d4d4; }
+}
+body.recipient .shell { width: 100%; max-width: 672px; padding: 64px 24px; }
+body.recipient main { max-width: none; }
+.save h1 { margin: 8px 0 0; font-size: 30px; line-height: 36px; font-weight: 500; letter-spacing: -0.025em; }
+.save .description { margin: 16px 0 0; }
+.save section { margin-top: 64px; }
+.save .heading-row { display: flex; align-items: center; justify-content: space-between; }
+.save h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0; }
+.save h3 { margin: 32px 0 0; font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0; }
+.save p { margin: 0; }
+.save .lead { margin-top: 8px; }
+.save .follow { margin-top: 24px; }
+.save code { font: 400 14px/20px var(--mono); padding: 2px 6px; border-radius: 4px; background: var(--code); }
+.save .step-back { display: flex; margin: 0; }
+.save .back-link { display: inline-flex; align-items: center; gap: 8px; min-height: 0; padding: 12px 0; margin: -12px 0; font-size: 14px; line-height: 20px; color: var(--faint); text-decoration: none; }
+.save .back-link:hover, .save .back-link:focus-visible { color: var(--text); }
+.icon-link { display: inline-flex; padding: 12px; margin: -12px; color: var(--faint); border-radius: 6px; }
+.icon-link:hover, .icon-link:focus-visible { color: var(--text); }
+.icon { display: inline-flex; line-height: 0; }
+.block { position: relative; overflow: hidden; margin: 16px 0 0; border-radius: 12px; background: var(--block); }
+.block-command, .block-text { margin: 0; color: var(--text); user-select: text; overflow-wrap: anywhere; }
+.block-command { padding: 16px; font: 400 13px/1.625 var(--mono); color: var(--command); white-space: pre; overflow-x: auto; scrollbar-width: none; }
+.block-command::-webkit-scrollbar { display: none; }
+.block-text { padding: 16px 48px 16px 16px; font: 400 13px/20px var(--mono); white-space: pre-wrap; }
+.block-command:focus, .block-text:focus { outline: none; box-shadow: none; }
+.copy {
+  position: absolute; top: 12px; right: 12px;
+  width: 28px; height: 28px; min-height: 0; padding: 6px; margin: 0;
+  border: 0; border-radius: 6px; background: transparent; color: var(--faint);
+  opacity: 0; transition: opacity 150ms cubic-bezier(.4, 0, .2, 1);
+  cursor: pointer;
+}
+.copy::before { content: ""; position: absolute; inset: -8px; }
+.block:hover .copy, .copy:focus-visible, .copy.copied { opacity: 1; }
+.copy:hover { background: var(--copy-hover); color: var(--copy-hover-icon); }
+.copy.copied .icon { animation: icon-in 150ms cubic-bezier(.4, 0, .2, 1); }
+@keyframes icon-in { from { opacity: 0; transform: scale(.5); filter: blur(4px); } }
+@media (hover: none) {
+  .copy { opacity: 1; }
+  /* Accepted departure from the contract: with the control visible at rest, a scrolling command
+     would still run under it at any scroll position, so on no-hover devices the command wraps instead. */
+  .block-command { padding-right: 48px; white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+@media (prefers-reduced-motion: reduce) { .copy { transition: none; } .copy.copied .icon { animation: none; } }
+.save .status { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--secondary); }
+.save .status:empty { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+h1:focus-visible, h2:focus-visible { box-shadow: none; }
+@media (max-width: 600px) {
+  body.recipient .shell { width: 100%; padding: 64px 24px; }
+  .save h1 { font-size: 30px; line-height: 36px; letter-spacing: -0.025em; }
+  button.copy { width: 28px; }
+}

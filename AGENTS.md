@@ -70,6 +70,7 @@ rules. Follow it end-to-end; do not read every linked workflow. Paths below are 
 | Connect an external project | [`schema/workflows/connect-project.md`](schema/workflows/connect-project.md) |
 | Scheduled agent-skill discovery and reflection | [`schema/workflows/session-learning.md`](schema/workflows/session-learning.md); enabled pilots only — stay on this workflow, not the structure role |
 | Create, show, use, or update a human skill | [`schema/workflows/human-skill.md`](schema/workflows/human-skill.md) |
+| Share a page or note with a person | [`schema/workflows/share.md`](schema/workflows/share.md) |
 | ProductLab work | [`schema/workflows/productlab.md`](schema/workflows/productlab.md), only after explicit invocation |
 | System, schema, workflow, harness, or Git configuration changes | [`schema/agents/apollo.md`](schema/agents/apollo.md) (Apollo structure role) |
 

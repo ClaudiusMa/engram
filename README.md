@@ -62,6 +62,16 @@ You need a computer, about ten minutes, and an AI app that can work with files i
 4. **Save your first thing:** *"Digest this article: (paste a link)"*.
 5. **See your map:** on a Mac, double-click **Engram Graph** inside your Engram folder. (Elsewhere, ask your AI to run `npm run graph`.)
 
+## Share selected knowledge
+
+A sharing-enabled checkout can serve an explicit source selection with an agent-reviewed preview and preserved originals for seven days. The reader’s **Save my Engram** action hands off to Codex, Claude, or Cursor for additive local import and a discussion of what they learned. Sender thoughts stay attributed to the sender; the recipient’s take starts empty.
+
+```sh
+node bin/engram-sharing.mjs serve --demo
+```
+
+This starts a synthetic local preview. Invitations default to a clearly labeled local outbox; no email is sent. Remote collaborators need a reachable HTTPS host and separately configured delivery. Read [sharing operations](bin/sharing/README.md) for preparation, authenticated sender access, local import/setup, expiry and limits. Use this checkout’s commands until the feature is available in your trusted installed version.
+
 ## Your knowledge stays yours
 
 - Everything lives in plain files in your own folder. No account and no Engram server.

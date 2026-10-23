@@ -17,6 +17,7 @@ Usage:
   engram graph [workspace-dir] [--no-open]
   engram update <workspace-dir>
   engram <target-dir>
+  engram sharing <prepare|serve|import> [options]
 
 Examples:
   npx github:ClaudiusMa/engram init ~/Engram
@@ -26,7 +27,7 @@ Examples:
 
 const args = process.argv.slice(2);
 
-if (args.includes("--help") || args.includes("-h")) {
+if (args[0] !== "sharing" && (args.includes("--help") || args.includes("-h"))) {
   console.log(usage);
   process.exit(0);
 }
@@ -36,6 +37,10 @@ if (args[0] === "graph") {
   const options = args.slice(1);
   const workspace = options.find((value) => !value.startsWith("--")) ?? ".";
   console.log(await openGraph(path.resolve(expandHome(workspace)), { open: !options.includes("--no-open") }));
+} else if (args[0] === "sharing") {
+  const { runSharing } = await import("./engram-sharing.mjs");
+  try { await runSharing(args.slice(1)); }
+  catch (error) { console.error(error.status ? error.message : "Sharing could not continue. Check your selection, permissions, and configuration."); process.exitCode = 1; }
 } else if (args[0] === "update") {
   const { applyUpdate, describeReport } = await import("./engram-update.mjs");
   const options = args.slice(1);

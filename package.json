@@ -17,7 +17,9 @@
   "scripts": {
     "help": "node bin/personal-knowledge-base.mjs --help",
     "graph": "node bin/personal-knowledge-base.mjs graph",
-    "test": "node --test bin/personal-knowledge-base.test.mjs schema/workflows/session-learning.test.mjs"
+    "test": "node --test bin/personal-knowledge-base.test.mjs schema/workflows/session-learning.test.mjs",
+    "test:sharing": "node --test bin/sharing/*.test.mjs",
+    "sharing:demo": "node bin/engram-sharing.mjs serve --demo"
   },
   "engines": {
     "node": ">=18"

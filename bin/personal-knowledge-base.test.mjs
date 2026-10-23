@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const initializer = path.join(repoRoot, "bin", "personal-knowledge-base.mjs");
-const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab", "session-learning"];
+const routedWorkflows = ["ingest", "note", "clean-transcript", "query", "lint", "recap", "artifact-sync", "artifact", "connect-project", "page-rules", "human-skill", "productlab", "session-learning", "share"];
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 process.env.ENGRAM_NO_NETWORK = "1";
 
