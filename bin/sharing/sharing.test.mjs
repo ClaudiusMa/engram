@@ -128,7 +128,9 @@ test('import initializes privately, preserves originals/attribution, leaves My t
   assert.deepEqual(await fs.readFile(path.join(target, imported.originals[0])), Buffer.from(item.selection.files[0].data, 'base64'));
   const context = JSON.parse(await fs.readFile(path.join(target, imported.context), 'utf8')); assert.equal(context.senderThoughts, item.selection.senderThoughts);
   assert.match(imported.discussion, /1–3 specific questions/); assert.match(imported.discussion, /only on confirmation/);
-  assert.match(await fs.readFile(path.join(target, 'wiki/main/index.md'), 'utf8'), /engram-sharing:/); assert.match(await fs.readFile(path.join(target, 'wiki/main/log.md'), 'utf8'), /discussion and My take pending/);
+  const indexText = await fs.readFile(path.join(target, 'wiki/main/index.md'), 'utf8'); assert.match(indexText, /engram-sharing:/); assert.match(await fs.readFile(path.join(target, 'wiki/main/log.md'), 'utf8'), /discussion and My take pending/);
+  const sources = indexText.slice(indexText.indexOf('## Sources'), indexText.indexOf('\n## Notes'));
+  assert.equal((sources.match(/^\| --- \|/gmu) ?? []).length, 1, 'the row joins the template table instead of adding a second one'); assert.match(sources, /\| --- \| --- \| --- \| --- \|\n\| \[\[sources\/Synthetic Evidence/);
   assert.equal(spawnSync('git', ['check-ignore', '-q', '--', imported.page], { cwd: target }).status, 0);
   const firstIndex = await fs.readFile(path.join(target, 'wiki/main/index.md'), 'utf8'); const firstLog = await fs.readFile(path.join(target, 'wiki/main/log.md'), 'utf8');
   await fs.appendFile(path.join(target, imported.page), '\nA recipient-authored addition.\n');
@@ -142,7 +144,7 @@ test('import never overwrites conflicting files or follows destination symlinks'
   const id = digest(JSON.stringify(item.selection)); const raw = path.join(target, 'wiki/main/raw', 'Shared ' + id.slice(0, 12)); await fs.mkdir(raw); const existing = path.join(raw, item.selection.files[0].name); await fs.writeFile(existing, 'User-owned existing bytes.');
   await assert.rejects(importSelection({ selection: item.selection, target }), /Nothing was overwritten/); assert.equal(await fs.readFile(existing, 'utf8'), 'User-owned existing bytes.');
   await fs.rm(existing); await fs.symlink(path.join(item.originals, 'Evidence.txt'), existing);
-  await assert.rejects(importSelection({ selection: item.selection, target }), /Symbolic/); assert.equal(await fs.readFile(path.join(item.originals, 'Evidence.txt'), 'utf8'), Buffer.from(item.selection.files[0].data, 'base64').toString());
+  await assert.rejects(importSelection({ selection: item.selection, target }), /Symbolic links are not allowed: .* is a link/); assert.equal(await fs.readFile(path.join(item.originals, 'Evidence.txt'), 'utf8'), Buffer.from(item.selection.files[0].data, 'base64').toString());
 });
 
 test('import requires target consent for initialization, safe repository mode and whole-package validation', async t => {
