@@ -126,7 +126,9 @@ test('import initializes privately, preserves originals/attribution, leaves My t
   const item = await fixture(t); const target = path.join(item.directory, 'vault');
   const imported = await importSelection({ selection: item.selection, target, initialize: true }); assert.equal(imported.status, 'imported');
   const page = await fs.readFile(path.join(target, imported.page), 'utf8');
-  assert.match(page, /## My take\n\n_None yet\._/); assert.match(page, /Shared by: Synthetic sender/); assert.match(page, /Original author: Synthetic author/); assert.equal(page.includes(item.selection.senderThoughts), false); assert.equal(page.includes(item.selection.preview), false);
+  assert.match(page, /## My take\n\n_None yet\._/); assert.match(page, /Shared by: Synthetic sender/); assert.match(page, /Source attribution: Synthetic source provenance\.\n/);
+  const dotted = await importSelection({ selection: { ...item.selection, source: 'Ends with a period.' }, target: path.join(item.directory, 'dotted'), initialize: true });
+  assert.match(await fs.readFile(path.join(item.directory, 'dotted', dotted.page), 'utf8'), /Source attribution: Ends with a period\.\n/, 'no double period after an attribution'); assert.match(page, /Original author: Synthetic author/); assert.equal(page.includes(item.selection.senderThoughts), false); assert.equal(page.includes(item.selection.preview), false);
   assert.deepEqual(page.match(/^## .*$/gmu), ['## My take', "## What's in this source", '## Source', '## Source notes']);
   assert.deepEqual(await fs.readFile(path.join(target, imported.originals[0])), Buffer.from(item.selection.files[0].data, 'base64'));
   const context = JSON.parse(await fs.readFile(path.join(target, imported.context), 'utf8')); assert.equal(context.senderThoughts, item.selection.senderThoughts);
@@ -515,6 +517,8 @@ test('export writes one self-contained file: strict policy, hashed inline assets
   const target = path.join(item.directory, 'vault'); const shareFile = path.join(item.directory, 'share.html'); await fs.writeFile(shareFile, html);
   const imported = await importSelection({ packageFile: shareFile, target, initialize: true });
   assert.equal(imported.status, 'imported'); assert.equal(await fs.readFile(path.join(target, imported.originals[0]), 'utf8'), 'Original <b>bytes</b> & more\n');
+  await fs.writeFile(path.join(item.directory, 'not-json.json'), '<html>not json</html>');
+  await assert.rejects(importSelection({ packageFile: path.join(item.directory, 'not-json.json'), target: path.join(item.directory, 'other'), initialize: true }), /not an Engram package\. Pass the share \.html file/);
   await fs.writeFile(path.join(item.directory, 'plain.html'), '<html><body>no package</body></html>');
   await assert.rejects(importSelection({ packageFile: path.join(item.directory, 'plain.html'), target: path.join(item.directory, 'other'), initialize: true }), /does not contain an Engram share package/);
 });
