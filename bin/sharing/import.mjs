@@ -26,8 +26,20 @@ export async function fetchPackage(shareUrl) {
   for await (const chunk of response.body) { size += chunk.length; if (size > MAX_BYTES) throw new ShareError('Package is too large.'); chunks.push(chunk); }
   return validatePackage(JSON.parse(Buffer.concat(chunks).toString('utf8')));
 }
+// A share file (.html) carries its package in an inert JSON block; anything else must be the package JSON itself.
+export async function readPackageOrShareFile(filename) {
+  if (!/\.html?$/iu.test(filename)) return readPackage(filename);
+  await noSymlinks(filename);
+  const stat = await fs.stat(filename);
+  if (!stat.isFile() || stat.size > MAX_BYTES + 512 * 1024) throw new ShareError('Share file is too large or unavailable.');
+  const html = await fs.readFile(filename, 'utf8');
+  const match = html.match(/<script type="application\/json" id="engram-share">([^]*?)<\/script>/u);
+  if (!match) throw new ShareError('This file does not contain an Engram share package.');
+  const { packageName, fileName, exportedAt, ...pkg } = JSON.parse(match[1]);
+  return validatePackage(pkg);
+}
 export async function importSelection({ selection, packageFile, shareUrl, target, initialize = false, now = Date.now }) {
-  const prepared = validatePackage(selection ?? (packageFile ? await readPackage(packageFile) : await fetchPackage(shareUrl)));
+  const prepared = validatePackage(selection ?? (packageFile ? await readPackageOrShareFile(packageFile) : await fetchPackage(shareUrl)));
   if (!target) throw new ShareError('Choose an existing Engram or explicitly choose where to initialize one.');
   const root = path.resolve(target);
   await noSymlinks(root, { allowMissing: true });

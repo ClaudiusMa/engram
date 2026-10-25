@@ -31,7 +31,7 @@ node bin/engram-sharing.mjs prepare --manifest .local/engram-sharing/<share-slug
 node bin/engram-sharing.mjs export
 ```
 
-- `export` writes `~/Desktop/<title>.html` (owner-only; the private `.local/engram-sharing/export/` folder only when there is no Desktop). Pass `--out <path>` only to a location the user named. The file embeds the reviewed package: the recipient's page shows the clip as a preview and the originals themselves (text opens inline, any original can be saved), offers **Save package**, which writes `engram-selection.json`, and the instruction their agent receives uses `import --package`.
+- `export` writes `~/Desktop/<title>.html` (owner-only; the private `.local/engram-sharing/export/` folder only when there is no Desktop). Pass `--out <path>` only to a location the user named. The file embeds the reviewed package. The recipient's page reads like a document: who shared it and when, the title, the clip as a standfirst, then the original in full (Markdown rendered safely, other text as-is), then **Keep it** with two plain choices: **Download the file** (the original, for anyone) or **Add to my Engram**, which opens one instruction for their agent. That instruction points the agent at the share file itself (`import --package <the .html>`); there is no second download.
 - Tell the user the path once, offer to reveal it in Finder, and stop. Sending is theirs: attachment, message, AirDrop. Do not email, upload, or post the file.
 - There is no link, server, expiry, or revocation: once sent, the recipient has it. Say so if the user asks whether it can be withdrawn.
 - The recipient needs the sharing tool from a published Engram to save the clip; the page walks them through setup. If the published Engram does not yet include sharing, say so.

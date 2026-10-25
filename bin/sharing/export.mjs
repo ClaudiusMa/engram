@@ -14,13 +14,15 @@ export function exportFilename(title) {
   const base = String(title).replace(/[/\\<>:"|?*\[\]#\r\n]/gu, ' ').replace(/\s+/gu, ' ').trim().slice(0, 120) || 'Engram share';
   return `${base}.html`;
 }
-export async function renderShareHtml(input) {
+export async function renderShareHtml(input, { fileName, exportedAt = new Date().toISOString() } = {}) {
   const selection = validatePackage(input);
+  const name = fileName || exportFilename(selection.title);
   const [css, js, logo] = await Promise.all(['style.css', 'app.js', 'logo.svg'].map(name => fs.readFile(path.join(web, name), 'utf8')));
   // The embedded package is data for the page script, never executed; escape anything that could close the element.
-  const embedded = JSON.stringify({ ...selection, packageName: PACKAGE_FILENAME }).replace(/</gu, '\\u003c').replace(/\u2028/gu, '\\u2028').replace(/\u2029/gu, '\\u2029');
+  const embedded = JSON.stringify({ ...selection, packageName: PACKAGE_FILENAME, fileName: name, exportedAt }).replace(/</gu, '\\u003c').replace(/\u2028/gu, '\\u2028').replace(/\u2029/gu, '\\u2029');
   const policy = `default-src 'none'; script-src ${hash(js)}; style-src ${hash(css)}; base-uri 'none'; form-action 'none'`;
-  const clip = `<section class="reading"><h1 class="reading-title">${escape(selection.title)}</h1>${selection.sender ? `<p class="meta prose">Shared by ${escape(selection.sender)}</p>` : ''}<div class="clip"><div class="prose clip-prose">${escape(selection.preview)}</div></div><noscript><p class="meta">Turn on JavaScript to save this into your Engram.</p></noscript></section>`;
+  const textOriginals = selection.files.filter(file => ['text/markdown', 'text/plain', 'text/csv', 'application/json'].includes(file.type)).map(file => `<article class="original"><p class="meta original-name">${escape(file.name)}</p><pre class="original-text">${escape(Buffer.from(file.data, 'base64').toString('utf8'))}</pre></article>`).join('');
+  const clip = `<article class="share"><header class="masthead"><p class="from">${selection.sender ? escape(selection.sender) + ' shared this with you' : 'Shared with you'}</p></header><h1>${escape(selection.title)}</h1><section class="standfirst"><p class="label">In short</p><div class="standfirst-text prose">${escape(selection.preview)}</div></section><section class="originals"><p class="label">The original</p>${textOriginals}</section><noscript><p class="meta">Turn on JavaScript to download the original or add it to your Engram.</p></noscript></article>`;
   return `<!doctype html>
 <html lang="en">
 <head>

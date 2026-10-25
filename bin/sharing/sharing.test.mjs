@@ -457,7 +457,7 @@ async function recipientUI({ hash = '', selection: changes = {} } = {}) {
     constructor(tag) { this.tagName = tag; this.children = []; this.attributes = {}; this.listeners = {}; this.style = {}; this._text = ''; this.hidden = false; this.scrollHeight = 800; }
     set textContent(value) { this._text = String(value); this.children = []; }
     get textContent() { return this._text + this.children.map(child => child.textContent).join(''); }
-    append(...nodes) { this.children.push(...nodes); }
+    append(...nodes) { this.children.push(...nodes.map(node => typeof node === 'string' ? Object.assign(new Element('#text'), { _text: node }) : node)); }
     replaceChildren(...nodes) { this._text = ''; this.children = nodes; }
     setAttribute(name, value) { this.attributes[name] = value; }
     addEventListener(name, fn) { this.listeners[name] = fn; }
@@ -493,139 +493,6 @@ async function recipientUI({ hash = '', selection: changes = {} } = {}) {
   return { main, context, selection, location, history, entries, intervals, timeouts, copies, requests, window, all, find, click, settle, get focused() { return focused; }, setNow(value) { now = value; }, setFetch(fn) { fetchHandler = fn; }, setClipboard(fn) { clipboard = fn; } };
 }
 
-test('recipient reads, then saves from one page of sections; history preserves reading state', async () => {
-  const ui = await recipientUI();
-  assert.match(ui.main.textContent, /Shared by Demo sender/);
-  for (const clutter of ['Original author', 'Source omitted', 'Available until', 'Copies you save locally remain']) assert.equal(ui.main.textContent.includes(clutter), false);
-  assert.match(ui.main.textContent, /Separate synthetic thoughts/);
-  ui.click('Show more'); const reader = ui.main.children[0];
-  assert.equal(ui.all(reader).find(node => node.id === 'clip-continuation').hidden, false);
-  ui.window.scrollY = 420; ui.click('Save my Engram'); await ui.settle();
-  assert.equal(ui.location.hash, '#save'); assert.equal(ui.main.querySelector('h1').textContent, 'Save to your Engram');
-  assert.equal(ui.requests.length, 1, 'the page verifies the share before showing anything to paste');
-  assert.equal(ui.main.textContent.includes(ui.selection.title), false); assert.equal(ui.find('Save my Engram'), undefined);
-  assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'h2').map(node => node.textContent), ['Setup', 'Save', 'Prompts to try after saving']);
-  const areas = ui.all(ui.main).filter(node => ['pre', 'p'].includes(node.tagName) && /^(setup-command|setup-prompt|agent-instruction|after-prompt-\d)$/u.test(node.id ?? ''));
-  assert.deepEqual(areas.map(area => area.id), ['setup-command', 'setup-prompt', 'agent-instruction', 'after-prompt-1', 'after-prompt-2']);
-  assert.equal(areas[0].tagName, 'pre', 'the command is a pre'); for (const area of areas.slice(1)) assert.equal(area.tagName, 'p');
-  assert.equal(areas[0].textContent, 'npx github:ClaudiusMa/engram init ~/Engram'); assert.match(areas[1].textContent, /npx github:ClaudiusMa\/engram init ~\/Engram/);
-  const instruction = areas[2].textContent;
-  assert.equal(instruction.includes(ui.selection.url), true); assert.match(instruction, /wait for my choice before writing/); assert.match(instruction, /Verify that file's SHA-256/); assert.match(instruction, /Stop if it is missing or does not match/);
-  assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
-  assert.equal(instruction.includes(ui.selection.preview), false); assert.equal(instruction.includes('\n'), false, 'one paragraph to read, not a block of lines');
-  assert.match(areas[3].textContent, /from Demo sender/);
-  assert.match(ui.main.textContent, /That's it\. One folder, ~\/Engram, in your home folder; nothing outside it changes/);
-  assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'h3').map(node => node.textContent), ['See how it connects to what you already know:', 'Write your take:']);
-  const github = ui.all(ui.main).find(node => node.tagName === 'a' && node.href === 'https://github.com/ClaudiusMa/engram'); assert.equal(github.attributes['aria-label'], 'Engram on GitHub'); assert.equal(github.textContent, '', 'icon-only link, as on DialKit');
-  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')).every(node => node.href === 'https://github.com/ClaudiusMa/engram'), true, 'only the repository root is linked, never a file');
-  const copies = ui.all(ui.main).filter(node => node.tagName === 'button'); assert.equal(copies.length, 5, 'one Copy per block and nothing else');
-  assert.deepEqual(copies.map(node => node.attributes['aria-label']), ['Copy command', 'Copy setup prompt', 'Copy instruction', 'Copy prompt', 'Copy prompt']);
-  assert.ok(ui.find('Copy instruction'));
-  assert.equal(ui.focused, ui.main.querySelector('h1'));
-  assert.equal(ui.intervals.length, 1); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 1);
-  ui.history.back(); await ui.settle(); assert.equal(ui.location.hash, ''); assert.equal(ui.window.scrollY, 420); assert.equal(ui.focused, ui.find('Save my Engram'));
-  assert.equal(ui.main.children[0], reader); assert.equal(ui.all(reader).find(node => node.id === 'clip-continuation').hidden, false);
-  ui.history.forward(); await ui.settle(); assert.equal(ui.location.hash, '#save'); assert.equal(ui.main.querySelector('h1').textContent, 'Save to your Engram');
-  assert.equal(ui.requests.every(([url]) => url === '/api/share/' + 'c'.repeat(43)), true);
-});
-
-test('recipient direct entry verifies first, older step links land on the save page, unknown fragments normalize', async () => {
-  const ui = await recipientUI({ hash: '#save' });
-  assert.ok(ui.main.querySelector('pre')); assert.equal(ui.requests.length, 1);
-  ui.click('Back to reading'); assert.equal(ui.location.hash, ''); assert.ok(ui.find('Save my Engram')); assert.equal(ui.entries.length, 1);
-  for (const hash of ['#save/existing', '#save/new/talk']) { const old = await recipientUI({ hash }); assert.equal(old.location.hash, '#save'); assert.ok(old.main.querySelector('pre')); assert.equal(old.entries.length, 1); }
-  const unknown = await recipientUI({ hash: '#unknown' }); assert.equal(unknown.location.hash, ''); assert.ok(unknown.find('Save my Engram')); assert.equal(unknown.entries.length, 1);
-  const missing = await recipientUI({ selection: { sender: undefined, localSetup: undefined } });
-  assert.equal(missing.main.textContent.includes('Shared by'), false);
-  missing.click('Save my Engram'); await missing.settle();
-  const areas = missing.all(missing.main).filter(node => /^(agent-instruction|after-prompt-1)$/u.test(node.id ?? ''));
-  assert.match(areas[0].textContent, /trusted sharing-enabled Engram installation/); assert.equal(areas[1].textContent.includes(' from '), false);
-});
-
-test('recipient clipboard is serialized, honest on success, and visible/selectable on failure', async () => {
-  const ui = await recipientUI({ hash: '#save' }); let resolveCopy;
-  ui.setClipboard(value => { ui.copies.push(value); return new Promise(resolve => { resolveCopy = resolve; }); });
-  const action = ui.find('Copy instruction'); const first = ui.click('Copy instruction'); const second = ui.click('Copy instruction'); await ui.settle();
-  assert.equal(ui.copies.length, 1, 'a second press while one copy is in flight is ignored');
-  resolveCopy(); await Promise.all([first, second]);
-  const status = ui.all(ui.main).find(node => node.attributes.role === 'status' && node.textContent === 'Copied.');
-  assert.ok(status, 'success is announced'); assert.equal(status.className, 'status sr-only', 'and visually hidden: the check icon is the visible feedback');
-  assert.equal(ui.copies[0], ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent);
-  assert.equal(ui.entries.length, 1); assert.equal(ui.main.textContent.includes('Saved'), false);
-  assert.equal(ui.timeouts.filter(timer => timer.delay === 2000).length, 1); assert.equal(action.textContent, 'Copy instruction', 'the accessible name never changes');
-  ui.setClipboard(async () => { throw new Error('denied'); }); await ui.click('Copy instruction');
-  assert.match(ui.main.textContent, /Couldn't copy automatically. Select and copy the instruction above/);
-  const area = ui.all(ui.main).find(node => node.id === 'agent-instruction'); assert.equal(ui.focused, area); assert.equal(area.selected, true); assert.equal(area.hidden, false);
-  ui.setClipboard(async value => { ui.copies.push(value); }); await ui.click('Copy command');
-  assert.equal(ui.copies.at(-1), 'npx github:ClaudiusMa/engram init ~/Engram');
-});
-
-test('recipient expiry overrides deferred validation and clipboard completion on every screen', async () => {
-  for (const hash of ['', '#save']) {
-    const ui = await recipientUI({ hash }); ui.setNow(ui.selection.expiresAt); await ui.intervals[0]();
-    assert.equal(ui.main.textContent, 'This share has expiredAsk the sender for a new link.'); assert.equal(ui.main.querySelector('pre'), undefined); assert.equal(ui.find('Save my Engram'), undefined);
-  }
-  const ui = await recipientUI(); let resolveFetch;
-  ui.setFetch(() => new Promise(resolve => { resolveFetch = resolve; }));
-  ui.click('Save my Engram');
-  ui.setNow(ui.selection.expiresAt); await ui.intervals[0]();
-  resolveFetch({ ok: true, json: async () => ui.selection }); await ui.settle();
-  assert.equal(ui.main.textContent, 'This share has expiredAsk the sender for a new link.');
-  const copying = await recipientUI({ hash: '#save' }); let resolveCopy;
-  copying.setClipboard(() => new Promise(resolve => { resolveCopy = resolve; })); const promise = copying.click('Copy instruction'); await copying.settle();
-  copying.setNow(copying.selection.expiresAt); await copying.intervals[0](); resolveCopy(); await promise;
-  assert.equal(copying.main.textContent, 'This share has expiredAsk the sender for a new link.');
-});
-
-test('recipient unavailable and temporary validation failures remove controls; retry keeps the requested step', async () => {
-  const ui = await recipientUI({ hash: '#save' });
-  ui.setFetch(async () => { throw new Error('offline'); }); await ui.intervals[0]();
-  assert.match(ui.main.textContent, /Couldn't load this share. Try again/); assert.equal(ui.main.querySelector('pre'), undefined); assert.equal(ui.location.hash, '#save');
-  ui.setFetch(async () => ({ ok: true, json: async () => ui.selection })); await ui.click('Try again'); await ui.settle();
-  assert.equal(ui.main.querySelector('h1').textContent, 'Save to your Engram'); assert.equal(ui.intervals.length, 1);
-  ui.setFetch(async () => ({ ok: false, status: 404, json: async () => ({ error: 'unknown' }) })); await ui.intervals[0]();
-  assert.equal(ui.main.textContent, "This share isn't availableCheck the link or ask the sender for a new one."); assert.equal(ui.main.querySelector('pre'), undefined);
-});
-
-test('recipient delayed validation cannot restore the save page after Back, and copy rechecks server availability', async () => {
-  const ui = await recipientUI(); let resolveFetch;
-  ui.setFetch(() => new Promise(resolve => { resolveFetch = resolve; }));
-  ui.click('Save my Engram');
-  ui.history.back(); assert.equal(ui.location.hash, '');
-  resolveFetch({ ok: true, json: async () => ui.selection }); await ui.settle();
-  assert.ok(ui.find('Save my Engram')); assert.equal(ui.main.querySelector('pre'), undefined);
-  const copying = await recipientUI({ hash: '#save' });
-  copying.setFetch(async () => ({ ok: false, status: 410, json: async () => ({ error: 'expired remotely' }) }));
-  await copying.click('Copy instruction');
-  assert.equal(copying.copies.length, 0); assert.equal(copying.main.textContent, 'This share has expiredAsk the sender for a new link.');
-});
-
-test('recipient expiry and unavailable errors move focus from removed controls to the state heading', async () => {
-  for (const status of [410, 404, 503]) {
-    const ui = await recipientUI({ hash: '#save' });
-    const action = ui.find('Copy instruction'); action.focus();
-    assert.equal(ui.focused, action);
-    ui.setFetch(async () => ({ ok: false, status, json: async () => ({ error: 'synthetic failure' }) }));
-    await ui.intervals[0]();
-    const heading = ui.main.querySelector('h1');
-    assert.equal(ui.focused, heading, 'removed copy control must give focus to the announced state');
-    assert.equal(heading.tabIndex, -1);
-    assert.equal(ui.main.querySelector('pre'), undefined);
-    if (status === 503) {
-      assert.ok(ui.find('Try again'));
-      ui.setFetch(async () => ({ ok: true, json: async () => ui.selection }));
-      await ui.click('Try again'); await ui.settle();
-      assert.equal(ui.focused, ui.main.querySelector('h1'));
-      assert.equal(ui.focused.textContent, 'Save to your Engram');
-    }
-  }
-  const deadline = await recipientUI({ hash: '#save' });
-  deadline.main.querySelector('pre').focus(); deadline.setNow(deadline.selection.expiresAt);
-  deadline.timeouts.find(timer => timer.delay > 2000).fn();
-  assert.equal(deadline.focused, deadline.main.querySelector('h1'));
-  assert.equal(deadline.focused.textContent, 'This share has expired');
-});
-
 test('export writes one self-contained file: strict policy, hashed inline assets, embedded package, no network', async t => {
   const item = await fixture(t, 'Original <b>bytes</b> & more\n');
   const selection = { ...item.selection, title: 'Title <script>alert(1)</script>', preview: 'A clip with <tags> & "quotes".' };
@@ -637,16 +504,19 @@ test('export writes one self-contained file: strict policy, hashed inline assets
   assert.equal(html.includes('<script>alert(1)</script>'), false); assert.match(html, /<title>Title &lt;script&gt;alert\(1\)&lt;\/script&gt; · Engram<\/title>/); assert.match(html, /A clip with &lt;tags&gt; &amp; &quot;quotes&quot;\./);
   const embedded = html.match(/<script type="application\/json" id="engram-share">([^]*?)<\/script>/u)[1];
   assert.equal(embedded.includes('<'), false, 'the package never contains a raw angle bracket');
-  const pkg = JSON.parse(embedded); assert.equal(pkg.packageName, PACKAGE_FILENAME); const { packageName, ...clean } = pkg;
+  const pkg = JSON.parse(embedded); assert.equal(pkg.packageName, PACKAGE_FILENAME); assert.match(pkg.exportedAt, /^\d{4}-\d{2}-\d{2}T/); assert.equal(pkg.fileName, 'Title script alert(1) script.html'); const { packageName, fileName, exportedAt, ...clean } = pkg;
   assert.deepEqual(validatePackage(clean), validatePackage(selection), 'the saved package is the reviewed selection, byte for byte');
   const urls = [...html.matchAll(/https?:\/\/[^\s"'<)]+/gu)].map(m => m[0]);
   assert.deepEqual([...new Set(urls)].sort(), ['http://www.w3.org/2000/svg', 'https://github.com/ClaudiusMa/engram'], 'no network references beyond the repository link and the SVG namespace');
   assert.equal(html.includes('src="/'), false); assert.equal(html.includes('href="/'), false);
   assert.equal(exportFilename('Global: Context / "Value"?'), 'Global Context Value.html'); assert.equal(exportFilename('   '), 'Engram share.html');
-  // The embedded package imports exactly like a downloaded one.
-  const target = path.join(item.directory, 'vault'); await fs.writeFile(path.join(item.directory, 'engram-selection.json'), JSON.stringify(clean));
-  const imported = await importSelection({ packageFile: path.join(item.directory, 'engram-selection.json'), target, initialize: true });
+  assert.match(html, /<pre class="original-text">Original &lt;b&gt;bytes&lt;\/b&gt; &amp; more\n<\/pre>/, 'the original is readable without JavaScript');
+  // The share file itself is the package: the importer reads the embedded block.
+  const target = path.join(item.directory, 'vault'); const shareFile = path.join(item.directory, 'share.html'); await fs.writeFile(shareFile, html);
+  const imported = await importSelection({ packageFile: shareFile, target, initialize: true });
   assert.equal(imported.status, 'imported'); assert.equal(await fs.readFile(path.join(target, imported.originals[0]), 'utf8'), 'Original <b>bytes</b> & more\n');
+  await fs.writeFile(path.join(item.directory, 'plain.html'), '<html><body>no package</body></html>');
+  await assert.rejects(importSelection({ packageFile: path.join(item.directory, 'plain.html'), target: path.join(item.directory, 'other'), initialize: true }), /does not contain an Engram share package/);
 });
 
 test('export command writes an owner-only file under the private state directory', async t => {
@@ -662,33 +532,70 @@ test('export command writes an owner-only file under the private state directory
   assert.match(run.stdout, /no link, server or email is needed/);
 });
 
-test('exported page runs in file mode: no server calls, package-based instruction, Save package control', async () => {
-  const ui = await recipientUI({ hash: '#save', selection: { url: undefined, expiresAt: undefined, localSetup: undefined, packageName: 'engram-selection.json', files: [{ name: 'Evidence.txt', type: 'text/plain', size: 4, sha256: 'a'.repeat(64), data: 'dGVzdA==' }] } });
-  assert.equal(ui.requests.length, 0, 'file mode never fetches'); assert.equal(ui.intervals.length, 0); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 0, 'no expiry deadline');
-  assert.equal(ui.main.querySelector('h1').textContent, 'Save to your Engram');
+test('recipient page: masthead, standfirst, the original in full, two ways to keep it', async () => {
+  const data = Buffer.from('# Heading\n\nA **bold** line with *italic* and `code` and a [link](https://example.invalid).\n\n- one\n- two\n\n> quoted\n\n---\n\nLast.').toString('base64');
+  const ui = await recipientUI({ selection: { url: undefined, expiresAt: undefined, localSetup: undefined, packageName: 'engram-selection.json', fileName: 'Synthetic selection.html', exportedAt: '2026-10-25T12:00:00Z', files: [{ name: 'Evidence.md', type: 'text/markdown', size: 90, sha256: 'a'.repeat(64), data }] } });
+  await ui.settle();
+  assert.equal(ui.requests.length, 0, 'file mode never fetches'); assert.equal(ui.intervals.length, 0); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 0);
+  assert.match(ui.main.textContent, /^Demo sender shared this with you/); assert.equal(ui.main.querySelector('h1').textContent, 'Synthetic selection'); assert.equal(ui.focused, ui.main.querySelector('h1'));
+  assert.match(ui.main.textContent, /In short/); assert.match(ui.main.textContent, /Full final paragraph\./, 'the clip shows in full, no Show more');
+  assert.match(ui.main.textContent, /Separate synthetic thoughts/); assert.match(ui.main.textContent, /Demo's note to you/);
+  assert.match(ui.main.textContent, /The original/); assert.match(ui.main.textContent, /Evidence\.md · 90 B/);
+  const doc = ui.all(ui.main).find(node => node.className === 'document'); assert.ok(doc, 'markdown original renders as a document');
+  assert.deepEqual(doc.children.map(node => node.tagName), ['h3', 'p', 'ul', 'blockquote', 'hr', 'p']);
+  assert.equal(doc.children[0].textContent, 'Heading'); assert.equal(ui.all(doc).filter(node => node.tagName === 'strong')[0].textContent, 'bold'); assert.equal(ui.all(doc).filter(node => node.tagName === 'em')[0].textContent, 'italic'); assert.equal(ui.all(doc).filter(node => node.tagName === 'code')[0].textContent, 'code');
+  assert.equal(ui.all(doc).some(node => node.tagName === 'a'), false, 'links in shared content never become anchors'); assert.match(doc.children[1].textContent, /link \(https:\/\/example\.invalid\)/);
+  assert.equal(ui.all(doc).filter(node => node.tagName === 'li').length, 2); assert.equal(doc.children[3].textContent, 'quoted');
+  assert.match(ui.main.textContent, /Keep it/); assert.match(ui.main.textContent, /Download the file/); assert.match(ui.main.textContent, /Add it to your Engram/); assert.match(ui.main.textContent, /Engram is a personal knowledge folder/);
+  const download = ui.all(ui.main).find(node => node.tagName === 'button' && node.textContent === 'Download Evidence.md'); assert.ok(download);
+  await download.listeners.click(); assert.match(ui.main.textContent, /Couldn't download automatically\. Ask your agent to extract Evidence\.md/);
+  const add = ui.find('Add to my Engram'); assert.ok(add); const panel = ui.all(ui.main).find(node => node.id === 'add'); assert.equal(panel.hidden, true);
+  await add.listeners.click(); assert.equal(panel.hidden, false); assert.equal(add.attributes['aria-expanded'], 'true'); assert.equal(ui.focused.textContent, 'Add to your Engram');
   const instruction = ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent;
-  assert.match(instruction, /downloaded as engram-selection\.json/); assert.match(instruction, /import --package "<path to engram-selection\.json>" --target "<my folder>"/); assert.equal(instruction.includes('--url'), false);
-  assert.match(instruction, /wait for my choice before writing/); assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
-  const save = ui.find('Save package'); assert.ok(save, 'the page offers the package'); assert.equal(save.tagName, 'button');
-  assert.match(ui.main.textContent, /Save it first; your browser downloads it as engram-selection\.json/);
-  await save.listeners.click(); assert.match(ui.main.textContent, /Couldn't save automatically\. Ask your agent to extract the package/, 'without Blob support the page says so instead of pretending');
-  ui.setClipboard(async value => { ui.copies.push(value); }); await ui.click('Copy instruction'); await ui.settle();
-  assert.equal(ui.copies[0], instruction); assert.equal(ui.requests.length, 0, 'copying in file mode needs no availability check');
-  ui.click('Back to reading'); assert.equal(ui.location.hash, ''); assert.ok(ui.find('Save my Engram'));
-  assert.match(ui.main.textContent, /Original/); assert.match(ui.main.textContent, /The clip above is a preview\. This is the actual material being shared/); assert.match(ui.main.textContent, /Evidence\.txt · 4 B/);
-  const body = ui.all(ui.main).find(node => node.id === 'original-0'); assert.equal(body.hidden, true); assert.equal(body.textContent, '');
-  await ui.click('Show original'); assert.equal(body.hidden, false); assert.equal(body.textContent, 'test', 'the embedded bytes render as inert text'); assert.ok(ui.find('Hide original'));
-  await ui.click('Hide original'); assert.equal(body.hidden, true); assert.equal(body.textContent, 'test');
-  assert.ok(ui.find('Save file')); await ui.click('Save file'); assert.match(ui.main.textContent, /Couldn't save automatically\. Ask your agent to extract Evidence\.txt/);
-  assert.equal(ui.requests.length, 0, 'file mode never fetches, even for originals');
+  assert.match(instruction, /Add the Engram share file "Synthetic selection\.html" to my Engram/); assert.match(instruction, /import --package "<path to the \.html file>" --target "<my folder>"/); assert.equal(instruction.includes('--url'), false); assert.equal(instruction.includes('engram-selection.json'), false, 'no second download');
+  assert.match(instruction, /wait for my answers before writing/); assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
+  assert.match(ui.main.textContent, /never runs anything from this file/);
+  const setup = ui.all(ui.main).find(node => node.id === 'setup'); assert.equal(setup.hidden, true); await ui.click("Don't have Engram yet? Set it up first"); assert.equal(setup.hidden, false);
+  assert.equal(ui.all(ui.main).find(node => node.id === 'setup-command').textContent, 'npx github:ClaudiusMa/engram init ~/Engram');
+  assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'button' && node.className === 'copy').map(node => node.attributes['aria-label']), ['Copy instruction', 'Copy setup prompt', 'Copy command', 'Copy prompt', 'Copy prompt']);
+  const links = ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')); assert.deepEqual(links.map(node => node.href), ['https://github.com/ClaudiusMa/engram'], 'the colophon link is the only outbound link');
+  assert.match(ui.main.textContent, /This file makes no network requests/);
 });
 
-test('served page lists originals with metadata and loads text from the files endpoint', async () => {
+test('served page keeps expiry, availability and copy checks; originals come from the files endpoint', async () => {
   const ui = await recipientUI({ selection: { files: [{ name: 'Evidence.txt', type: 'text/plain', size: 7, sha256: 'a'.repeat(64) }, { name: 'Scan.pdf', type: 'application/pdf', size: 2048, sha256: 'b'.repeat(64) }] } });
-  assert.match(ui.main.textContent, /Originals/); assert.match(ui.main.textContent, /Evidence\.txt · 7 B/); assert.match(ui.main.textContent, /Scan\.pdf · 2 KB/);
-  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent === 'Show original').length, 1, 'only text originals open inline');
-  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent === 'Save file').length, 2);
   ui.setFetch(async url => url.endsWith('/files/0') ? { ok: true, arrayBuffer: async () => new TextEncoder().encode('served!').buffer } : { ok: true, json: async () => ui.selection });
-  await ui.click('Show original'); assert.equal(ui.all(ui.main).find(node => node.id === 'original-0').textContent, 'served!');
-  assert.equal(ui.requests.at(-1)[0], '/api/share/' + 'c'.repeat(43) + '/files/0');
+  ui.context.recipientView(ui.selection); await ui.settle();
+  assert.equal(ui.intervals.length, 1); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 1);
+  assert.match(ui.main.textContent, /The originals/); assert.match(ui.main.textContent, /Scan\.pdf · 2 KB/); assert.match(ui.main.textContent, /This is a pdf file\. Download it below/);
+  assert.equal(ui.all(ui.main).find(node => node.id === 'original-0').textContent, 'served!', 'text originals load from the files endpoint');
+  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent.startsWith('Download ')).length, 2);
+  const instruction = ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent; assert.match(instruction, /import --url "http:\/\/127\.0\.0\.1:4318\/s\/c{43}"/); assert.match(instruction, /Verify that file's SHA-256/);
+  assert.match(ui.main.textContent, /This page loads nothing from third parties/);
+  ui.setFetch(async () => ({ ok: false, status: 410, json: async () => ({ error: 'expired remotely' }) }));
+  await ui.click('Copy instruction'); assert.equal(ui.copies.length, 0); assert.equal(ui.main.textContent, 'This share has expiredAsk the sender for a new link.');
+  for (const status of [404, 503]) {
+    const other = await recipientUI(); other.setFetch(async () => ({ ok: false, status, json: async () => ({ error: 'synthetic failure' }) })); await other.intervals[0]();
+    assert.equal(other.focused, other.main.querySelector('h1')); assert.equal(other.main.querySelector('h1').tabIndex, -1);
+    if (status === 503) { assert.ok(other.find('Try again')); other.setFetch(async () => ({ ok: true, json: async () => other.selection })); await other.click('Try again'); await other.settle(); assert.equal(other.main.querySelector('h1').textContent, 'Synthetic selection'); }
+    else assert.equal(other.main.textContent, "This share isn't availableCheck the link or ask the sender for a new one.");
+  }
+  const expiring = await recipientUI(); expiring.setNow(expiring.selection.expiresAt); await expiring.intervals[0]();
+  assert.equal(expiring.main.textContent, 'This share has expiredAsk the sender for a new link.'); assert.equal(expiring.find('Add to my Engram'), undefined);
+});
+
+test('recipient clipboard is serialized, honest on success, and visible/selectable on failure', async () => {
+  const ui = await recipientUI({ hash: '#add' }); let resolveCopy; await ui.settle();
+  assert.equal(ui.all(ui.main).find(node => node.id === 'add').hidden, false, '#add opens the panel on arrival');
+  ui.setClipboard(value => { ui.copies.push(value); return new Promise(resolve => { resolveCopy = resolve; }); });
+  const action = ui.find('Copy instruction'); const first = ui.click('Copy instruction'); const second = ui.click('Copy instruction'); await ui.settle();
+  assert.equal(ui.copies.length, 1, 'a second press while one copy is in flight is ignored');
+  resolveCopy(); await Promise.all([first, second]);
+  const status = ui.all(ui.main).find(node => node.attributes.role === 'status' && node.textContent === 'Copied.');
+  assert.ok(status); assert.equal(status.className, 'status sr-only');
+  assert.equal(ui.copies[0], ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent);
+  assert.equal(action.textContent, 'Copy instruction', 'the accessible name never changes');
+  ui.setClipboard(async () => { throw new Error('denied'); }); await ui.click('Copy instruction');
+  assert.match(ui.main.textContent, /Couldn't copy automatically\. Select and copy the instruction above/);
+  const area = ui.all(ui.main).find(node => node.id === 'agent-instruction'); assert.equal(ui.focused, area); assert.equal(area.selected, true);
 });

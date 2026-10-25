@@ -103,7 +103,7 @@ export async function runSharing(args = process.argv.slice(2)) {
     const out = path.resolve(flags.out ?? defaultExportPath(prepared.title, stateDir));
     await noSymlinks(out, { allowMissing: true });
     await fs.mkdir(path.dirname(out), { recursive: true, mode: 0o700 });
-    await fs.writeFile(out, await renderShareHtml(prepared), { mode: 0o600 });
+    await fs.writeFile(out, await renderShareHtml(prepared, { fileName: path.basename(out) }), { mode: 0o600 });
     console.log(`Wrote ${out}`);
     console.log('Send that one file. It carries the clip, the original, and the save instructions; no link, server or email is needed.');
     return;
