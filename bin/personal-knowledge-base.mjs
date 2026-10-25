@@ -119,20 +119,6 @@ async function initializeVault(destination) {
     skipped,
   );
 
-  await copyFileIfMissing("schema/obsidian/app.json", path.join(destination, ".obsidian", "app.json"), created, skipped);
-  await copyFileIfMissing(
-    "schema/obsidian/graph.json",
-    path.join(destination, ".obsidian", "graph.json"),
-    created,
-    skipped,
-  );
-  await copyFileIfMissing(
-    "schema/obsidian/types.json",
-    path.join(destination, ".obsidian", "types.json"),
-    created,
-    skipped,
-  );
-
   const { latestCommit, recordInstall } = await import("./engram-update.mjs");
   recordInstall(packageRoot, destination, await latestCommit());
 
@@ -153,8 +139,8 @@ async function initializeVault(destination) {
   printList("Skipped existing", skipped);
   console.log("");
   console.log("Next steps:");
-  console.log("  1. Open this folder as an Obsidian vault. On a Mac, double-click Engram Graph to see a map of it.");
-  console.log("  2. Point your LLM agent at the vault and tell it to follow AGENTS.md.");
+  console.log("  1. On a Mac, double-click Engram Graph to see a map of your wiki. Elsewhere, run npm run graph.");
+  console.log("  2. Point your LLM agent at this folder and tell it to follow AGENTS.md.");
   console.log("  3. Run git status and confirm only public structure is trackable.");
 }
 

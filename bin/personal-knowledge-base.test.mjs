@@ -38,9 +38,6 @@ test("initializer creates the complete private knowledge-system skeleton without
     "wiki/main/positions",
     "wiki/main/questions",
     "wiki/main/projects",
-    ".obsidian/app.json",
-    ".obsidian/graph.json",
-    ".obsidian/types.json",
     "schema/templates/source.template.md",
     "schema/templates/note.template.md",
     "schema/templates/human-skill.template.md",
@@ -107,7 +104,7 @@ test("privacy boundary and package contents expose structure only", async (t) =>
   const privateProbes = [
     "wiki/main/raw/private.md",
     "wiki/main/human-skills/private.md",
-    ".obsidian/private.json",
+    ".settings/private.json",
     "artifact/example/private.md",
     ".local/session-learning/sessions/private.json",
     ".local/session-learning/candidates/example/SKILL.md",
@@ -137,7 +134,6 @@ test("privacy boundary and package contents expose structure only", async (t) =>
   const packedFiles = JSON.parse(pack.stdout)[0].files.map(({ path: filePath }) => filePath.replaceAll("\\", "/"));
   assert.equal(packedFiles.includes("AGENTS.md"), true, "package should include AGENTS.md");
   assert.equal(packedFiles.includes("CLAUDE.md"), false, "package should exclude CLAUDE.md");
-  assert.equal(packedFiles.includes("schema/obsidian/types.json"), true, "package should include property types");
   assert.equal(packedFiles.includes("schema/templates/project.template.md"), true, "package should include project template");
   assert.equal(packedFiles.includes("schema/templates/human-skill.template.md"), true, "package should include human-skill template");
   assert.equal(packedFiles.includes("schema/templates/human-skills-index.template.md"), true, "package should include human-skill registry template");
@@ -146,7 +142,6 @@ test("privacy boundary and package contents expose structure only", async (t) =>
   assert.equal(packedFiles.includes("schema/skills/turn-doc-into-artifact/agents/openai.yaml"), false, "artifact skill must stay vendor-neutral");
   assert.equal(packedFiles.includes("schema/workflows/artifact-humanize.js"), false, "package should not expose the retired Humanizer as active");
   assert.equal(packedFiles.some((filePath) => filePath.startsWith("wiki/")), false, "package must exclude wiki content");
-  assert.equal(packedFiles.some((filePath) => filePath.startsWith(".obsidian/")), false, "package must exclude live settings");
   assert.equal(packedFiles.includes("schema/CHANGELOG.md"), false, "package must exclude private incident records in either repository mode");
   const allowedPackageRoots = new Set(["AGENTS.md", "README.md", "LICENSE", "package.json", "bin", "schema"]);
   for (const filePath of packedFiles) {
@@ -160,7 +155,6 @@ test("privacy boundary and package contents expose structure only", async (t) =>
     "artifact/README.md",
     "package.json",
     "schema/gitignore.template",
-    "schema/obsidian/app.json",
   ];
   for (const relativePath of staleReferenceFiles) {
     const contents = await fs.readFile(path.join(repoRoot, relativePath), "utf8");

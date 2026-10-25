@@ -33,7 +33,7 @@ export async function importSelection({ selection, packageFile, shareUrl, target
   await noSymlinks(root, { allowMissing: true });
   // Preflight the entire destination before initialization, so existing symlink
   // directories cannot redirect initialization or any knowledge writes.
-  for (const relative of ['AGENTS.md', '.gitignore', 'bin', 'schema', '.obsidian', 'artifact', '.local', '.engram/private.json', 'wiki/main/raw', 'wiki/main/sources', 'wiki/main/index.md', 'wiki/main/log.md']) await noSymlinks(path.join(root, relative), { allowMissing: true });
+  for (const relative of ['AGENTS.md', '.gitignore', 'bin', 'schema', 'artifact', '.local', '.engram/private.json', 'wiki/main/raw', 'wiki/main/sources', 'wiki/main/index.md', 'wiki/main/log.md']) await noSymlinks(path.join(root, relative), { allowMissing: true });
   if (!(await exists(path.join(root, 'AGENTS.md')))) {
     if (!initialize) throw new ShareError('Engram not found. Ask where to create one, then use --init with that chosen target.');
     if (await exists(root) && (await fs.readdir(root)).length) throw new ShareError('Initialize a new or empty folder. Existing files need your agent’s attention first.');

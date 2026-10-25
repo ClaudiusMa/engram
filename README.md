@@ -133,7 +133,7 @@ In a default install the `.gitignore` ignores everything, then allows only publi
 
 ### Frontend notes
 
-Markdown stays plain: `[[wikilinks]]` and `![[embeds]]`, no plugin syntax. The initializer ships conservative Obsidian defaults. Hide `raw/`, `index.md`, `log.md`, `artifact/`, and structure files from any graph view.
+Markdown stays plain: `[[wikilinks]]` and `![[embeds]]`, no plugin syntax and no editor app required. Engram Graph reads those links to draw the map and leaves out `raw/`, `human-skills/`, `index.md`, and `log.md`.
 
 ### Verify
 
