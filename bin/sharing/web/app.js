@@ -214,13 +214,6 @@ function agentInstruction(selection) {
     "Then follow my Engram's ingest workflow (schema/workflows/ingest.md): tell me what was saved and where, and ask me what I learned before writing my take.",
   ].join(' ');
 }
-function afterPrompts(selection) {
-  const who = selection.sender ? ` from ${selection.sender}` : '';
-  return [
-    ['See how it connects to what you already know', `What did I just save${who}? Show me what in my Engram relates to it.`],
-    ['Write your take', "Help me write my take on it. Ask me questions first, and don't write anything until I confirm."],
-  ];
-}
 async function originalBytes(selection, index) {
   const file = selection.files[index];
   if (typeof file.data === 'string') { const binary = atob(file.data); const bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
@@ -336,12 +329,7 @@ function createRecipient(selection) {
     const panel = el('section', undefined, 'add'); panel.id = 'add'; panel.hidden = true;
     const heading = el('h2', 'Save to your Engram'); heading.tabIndex = -1;
     panel.append(heading, el('p', 'Engram is a personal knowledge folder that your AI agent keeps for you. Saving this adds the file and a page about it, and your agent asks what you took from it. Needs Claude Code, Codex or Cursor.', 'lead'));
-    panel.append(el('p', fileMode ? 'Paste this into your agent and press Enter. It will ask where this file is and where your Engram lives, then do the rest.' : 'Paste this into your agent and press Enter. It will ask where your Engram lives, then do the rest.', 'lead'));
-    panel.append(...pastable('agent-instruction', agentInstruction(selection), { name: 'Copy instruction', noun: 'instruction', token, check: verify }));
-    panel.append(el('p', fileMode
-      ? 'What happens: your agent reads the package inside this file, checks every original against its recorded hash, saves the original and a page about it, and leaves your take empty until you confirm it. It never runs anything from this file, overwrites your files, or sends anything.'
-      : 'What happens: your agent fetches the share, checks the importer against a known hash, saves the original and a page about it, and leaves your take empty until you confirm it. It never runs anything from the shared content, overwrites your files, or sends anything.', 'follow'));
-    // Setup, folded away: most people who press Add already have Engram.
+    // Setup comes first, folded: the natural question before pasting anything is whether you have Engram at all.
     const setupToggle = el('button', "Don't have Engram yet? Set it up first", 'disclosure'); setupToggle.type = 'button'; setupToggle.setAttribute('aria-expanded', 'false'); setupToggle.setAttribute('aria-controls', 'setup');
     const setup = el('div', undefined, 'setup'); setup.id = 'setup'; setup.hidden = true;
     setup.append(el('p', 'It takes about a minute and creates one folder, Engram, in your home folder. Nothing outside it changes, and nothing is sent anywhere. Tell your agent:', 'follow'));
@@ -350,8 +338,11 @@ function createRecipient(selection) {
     setup.append(...pastable('setup-command', SETUP_COMMAND, { command: true, name: 'Copy command', noun: 'command', token }));
     setupToggle.addEventListener('click', () => { setup.hidden = !setup.hidden; setupToggle.setAttribute('aria-expanded', String(!setup.hidden)); });
     panel.append(setupToggle, setup);
-    panel.append(el('h3', 'Afterwards, things to ask your agent'));
-    afterPrompts(selection).forEach(([name, text], index) => { panel.append(el('p', name, 'prompt-label'), ...pastable(`after-prompt-${index + 1}`, text, { name: 'Copy prompt', noun: 'prompt', token })); });
+    panel.append(el('p', fileMode ? 'Then paste this into your agent and press Enter. It will ask where this file is and where your Engram lives, then do the rest.' : 'Then paste this into your agent and press Enter. It will ask where your Engram lives, then do the rest.', 'lead paste'));
+    panel.append(...pastable('agent-instruction', agentInstruction(selection), { name: 'Copy instruction', noun: 'instruction', token, check: verify }));
+    panel.append(el('p', fileMode
+      ? 'What happens: your agent reads the package inside this file, checks every original against its recorded hash, saves the original and a page about it, and leaves your take empty until you confirm it. It never runs anything from this file, overwrites your files, or sends anything.'
+      : 'What happens: your agent fetches the share, checks the importer against a known hash, saves the original and a page about it, and leaves your take empty until you confirm it. It never runs anything from the shared content, overwrites your files, or sends anything.', 'follow'));
     return { panel, heading };
   }
   function render() {

@@ -552,7 +552,8 @@ test('recipient page: masthead, brief, source link, one call to action', async (
   assert.match(instruction, /wait for my answers before writing/); assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
   assert.match(ui.main.textContent, /never runs anything from this file/);
   const setup = ui.all(ui.main).find(node => node.id === 'setup'); assert.equal(setup.hidden, true); await ui.click("Don't have Engram yet? Set it up first"); assert.equal(setup.hidden, false);
-  assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'button' && node.className === 'copy').map(node => node.attributes['aria-label']), ['Copy instruction', 'Copy setup prompt', 'Copy command', 'Copy prompt', 'Copy prompt']);
+  const order = panel.children.map(node => node.id || node.className || node.tagName); assert.ok(order.indexOf('setup') < order.indexOf('lead paste'), 'setup comes before the paste instruction');
+  assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'button' && node.className === 'copy').map(node => node.attributes['aria-label']), ['Copy setup prompt', 'Copy command', 'Copy instruction']); assert.equal(ui.main.textContent.includes('Afterwards'), false);
   const links = ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')); assert.deepEqual(links.map(node => node.href), ['https://github.com/ClaudiusMa/engram'], 'the colophon link is the only outbound link');
   assert.match(ui.main.textContent, /This file makes no network requests/);
 });
