@@ -1,6 +1,6 @@
 # Privacy boundary: ignore every top-level path by default.
 # This prevents accidental publication of wiki pages, raw sources, URLs,
-# personal notes, logs, Obsidian settings, attachments, or ad hoc files.
+# personal notes, logs, editor settings, attachments, or ad hoc files.
 /*
 
 # Public repository structure.

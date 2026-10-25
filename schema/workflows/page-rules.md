@@ -16,7 +16,7 @@ Load this file only for workflows that classify or write wiki pages. Repository-
 Filename conventions:
 
 - **`wiki/main/sources/` and `wiki/main/raw/`**: Title Case with spaces. **No date prefix** — dates live in frontmatter (`published:`, `captured:`). **Short — capture the essence only**, drop em-dash subtitles, drop redundant brand prefixes when context implies them. The source page filename mirrors the source's essence; the raw file keeps the author's framing unless the author's filename is unreadable, in which case rename. Long descriptive titles make the wiki harder to scan and harder to render in a future frontend — keep them tight.
-- **`wiki/main/concepts/`, `entities/`, `positions/`, `questions/`, `projects/`, `human-skills/`**: lowercase kebab-case. These function as retrieval tags (see the Direction section in `README.md`), so the filename IS the tag. Human skills use unique filenames such as `meeting.md`, not repeated `SKILL.md` filenames, to stay distinct from agent skills and unambiguous in Obsidian.
+- **`wiki/main/concepts/`, `entities/`, `positions/`, `questions/`, `projects/`, `human-skills/`**: lowercase kebab-case. These function as retrieval tags (see the Direction section in `README.md`), so the filename IS the tag. Human skills use unique filenames such as `meeting.md`, not repeated `SKILL.md` filenames, to stay distinct from agent skills and unambiguous in links and the graph.
 
 Examples:
 
@@ -90,7 +90,7 @@ They should include links to:
 - conflicting or complicating sources
 - open questions
 
-This makes them useful in Obsidian graph view as synthesis nodes.
+This makes them useful in Engram Graph as synthesis nodes.
 
 ## Privacy Checklist
 
