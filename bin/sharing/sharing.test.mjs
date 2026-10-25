@@ -537,7 +537,7 @@ test('recipient page: masthead, brief, source link, one call to action', async (
   const ui = await recipientUI({ selection: { url: undefined, expiresAt: undefined, localSetup: undefined, packageName: 'engram-selection.json', fileName: 'Synthetic selection.html', exportedAt: '2026-10-25T12:00:00Z', files: [{ name: 'Evidence.md', type: 'text/markdown', size: 90, sha256: 'a'.repeat(64), data }] } });
   await ui.settle();
   assert.equal(ui.requests.length, 0, 'file mode never fetches'); assert.equal(ui.intervals.length, 0); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 0);
-  assert.match(ui.main.textContent, /^Demo sender shared this with you/); assert.equal(ui.main.querySelector('h1').textContent, 'Synthetic selection'); assert.equal(ui.focused, ui.main.querySelector('h1'));
+  assert.equal(ui.main.textContent.includes('shared this with you'), false, 'no masthead'); assert.equal(ui.main.children[0].children[0].tagName, 'h1', 'the title opens the page'); assert.equal(ui.main.querySelector('h1').textContent, 'Synthetic selection'); assert.equal(ui.focused, ui.main.querySelector('h1'));
   assert.match(ui.main.textContent, /Full final paragraph\./, 'the brief shows in full'); assert.equal(ui.main.textContent.includes('In short'), false);
   assert.match(ui.main.textContent, /Demo's note to you/);
   assert.equal(ui.main.textContent.includes('Heading'), false, 'the source is not rendered on the page'); assert.equal(ui.main.textContent.includes('Body.'), false);

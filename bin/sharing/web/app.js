@@ -358,11 +358,8 @@ function createRecipient(selection) {
     if (!available()) return;
     const token = ++revision;
     const page = el('article', undefined, 'share');
-    // Masthead: who, when, and that this is a share from their knowledge.
-    const masthead = el('header', undefined, 'masthead');
-    masthead.append(el('p', selection.sender ? `${selection.sender} shared this with you` : 'Shared with you', 'from'));
-    if (selection.exportedAt) masthead.append(el('p', formatDate(selection.exportedAt), 'when'));
-    page.append(masthead, el('h1', selection.title));
+    // No masthead: the title opens the page. Sender attribution travels in the package and the saved source page.
+    page.append(el('h1', selection.title));
     // The brief: the sender's few sentences on what this is.
     const brief = el('section', undefined, 'brief'); brief.append(el('div', selection.preview, 'brief-text prose'));
     page.append(brief);
