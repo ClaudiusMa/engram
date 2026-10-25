@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { preparePackage, readPackage, ShareError, noSymlinks, MAX_BYTES } from './sharing/package.mjs';
 import { createSharingServer } from './sharing/server.mjs';
 import { importSelection } from './sharing/import.mjs';
 import { createRelay } from './sharing/relay.mjs';
+import os from 'node:os';
 import { renderShareHtml, exportFilename } from './sharing/export.mjs';
 import { readPrivateJSON, removePrivateFile } from './sharing/storage.mjs';
 
 export const usage = `Engram sharing (local, no email sent by default)
 
   node bin/engram-sharing.mjs prepare --manifest <reviewed.json> --root <originals-dir>
-  node bin/engram-sharing.mjs export [--prepared <package.json>] [--out <file.html>]
+  node bin/engram-sharing.mjs export [--prepared <package.json>] [--out <file.html>]   (default: ~/Desktop/<title>.html)
   node bin/engram-sharing.mjs serve [--prepared <package.json>] [--port 4318]   (archived link path)
   node bin/engram-sharing.mjs import --url <share-url> --target <engram-dir> [--init]
   node bin/engram-sharing.mjs import --package <download.json> --target <engram-dir> [--init]
@@ -46,6 +48,13 @@ async function demoSelection(stateDir) {
   const content = 'Project Checkpoints\n\nA synthetic project team keeps a checkpoint after each experiment. Each checkpoint records the question, observation, decision, and next check. Decisions name the evidence used and any unresolved uncertainty.\n\nThis fixture demonstrates sharing only. It is not a report about a real project.\n';
   try { await fs.writeFile(filename, content, { flag: 'wx', mode: 0o600 }); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   return preparePackage({ version: 1, title: 'Project Checkpoints', sender: 'Demo sender', author: 'Synthetic fixture', previewReviewed: true, preview: 'A synthetic project team uses a checkpoint after each experiment to keep its question, observation, decision, and next check together. Each decision names its evidence and the uncertainty that remains.', senderThoughts: 'I would like to try this format at our next checkpoint. This is a synthetic sender thought.', files: [{ path: 'Project Checkpoints.txt' }] }, root);
+}
+// The file is for sending, so it lands where the person can see it: the Desktop when there is one.
+export function defaultExportPath(title, stateDir, home = os.homedir()) {
+  const desktop = path.join(home, 'Desktop');
+  let directory = stateDir ? path.join(stateDir, 'export') : desktop;
+  try { if (fsSync.statSync(desktop).isDirectory()) directory = desktop; } catch { /* no Desktop: keep the private export folder */ }
+  return path.join(directory, exportFilename(title));
 }
 export async function runSharing(args = process.argv.slice(2)) {
   if (!args.length || args.includes('--help') || args.includes('-h')) { console.log(usage); return; }
@@ -91,7 +100,7 @@ export async function runSharing(args = process.argv.slice(2)) {
   }
   if (command === 'export') {
     const prepared = await readPackage(flags.prepared ?? path.join(stateDir, 'prepared.json'));
-    const out = path.resolve(flags.out ?? path.join(stateDir, 'export', exportFilename(prepared.title)));
+    const out = path.resolve(flags.out ?? defaultExportPath(prepared.title, stateDir));
     await noSymlinks(out, { allowMissing: true });
     await fs.mkdir(path.dirname(out), { recursive: true, mode: 0o700 });
     await fs.writeFile(out, await renderShareHtml(prepared), { mode: 0o600 });

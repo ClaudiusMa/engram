@@ -53,6 +53,56 @@ function reading(selection, sender = false) {
     thoughts.append(el('h3', "Sender's thoughts"), el('p', selection.senderThoughts, 'prose'));
     section.append(thoughts);
   }
+  if (!sender && Array.isArray(selection.files) && selection.files.length) section.append(originals(selection));
+  return section;
+}
+// The clip is a preview; the originals are the knowledge. Text originals open inline as inert text, every original can be saved.
+const TEXT_TYPES = ['text/markdown', 'text/plain', 'text/csv', 'application/json'];
+const formatSize = bytes => bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+async function originalBytes(selection, index) {
+  const file = selection.files[index];
+  if (typeof file.data === 'string') { const binary = atob(file.data); const bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
+  const response = await fetch(`/api/share/${capability}/files/${index}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error('unavailable');
+  return new Uint8Array(await response.arrayBuffer());
+}
+function saveBytes(bytes, name, type) {
+  if (typeof Blob === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return false;
+  const href = URL.createObjectURL(new Blob([bytes], { type }));
+  const anchor = el('a'); anchor.href = href; anchor.download = name; anchor.click?.();
+  setTimeout(() => URL.revokeObjectURL(href), 10000);
+  return true;
+}
+function originals(selection) {
+  const section = el('section', undefined, 'originals');
+  section.append(el('h2', selection.files.length > 1 ? 'Originals' : 'Original'), el('p', 'The clip above is a preview. This is the actual material being shared, exactly as the sender has it.', 'meta'));
+  selection.files.forEach((file, index) => {
+    const item = el('div', undefined, 'original');
+    item.append(el('p', `${file.name} · ${formatSize(file.size)}`, 'meta prose original-name'));
+    const actions = el('div', undefined, 'actions');
+    const status = el('p', '', 'status'); status.setAttribute('role', 'status');
+    const body = el('pre', undefined, 'original-text prose'); body.hidden = true; body.id = `original-${index}`;
+    if (TEXT_TYPES.includes(file.type)) {
+      const toggle = button('Show original', true); toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-controls', body.id);
+      toggle.addEventListener('click', async () => {
+        if (body.hidden && !body.textContent) {
+          toggle.disabled = true;
+          try { body.textContent = new TextDecoder().decode(await originalBytes(selection, index)); }
+          catch { status.textContent = "Couldn't load the original. Save the file instead."; toggle.disabled = false; return; }
+          toggle.disabled = false;
+        }
+        body.hidden = !body.hidden; toggle.textContent = body.hidden ? 'Show original' : 'Hide original'; toggle.setAttribute('aria-expanded', String(!body.hidden));
+      });
+      actions.append(toggle);
+    }
+    const save = button('Save file', true);
+    save.addEventListener('click', async () => {
+      try { if (!saveBytes(await originalBytes(selection, index), file.name, file.type)) { status.textContent = `Couldn't save automatically. Ask your agent to extract ${file.name}.`; return; } status.textContent = `Saving ${file.name}.`; }
+      catch { status.textContent = "Couldn't load the original."; }
+    });
+    actions.append(save);
+    item.append(actions, status, body); section.append(item);
+  });
   return section;
 }
 function humanizedClip(text) {

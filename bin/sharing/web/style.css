@@ -64,6 +64,13 @@ body {
 }
 .identity img, .identity svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 .save .actions { margin: 16px 0 0; }
+.originals { margin-top: 48px; }
+.originals h2 { margin: 0 0 8px; font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0; }
+.original { margin-top: 16px; }
+.original-name { margin: 0; color: var(--text); }
+.original .actions { margin: 12px 0 0; }
+.original .actions button { width: auto; }
+.original-text { margin: 16px 0 0; padding: 16px; border-radius: 12px; background: var(--block, var(--hover)); color: var(--text); font: 400 15px/24px var(--font); white-space: pre-wrap; overflow-wrap: anywhere; }
 .save .actions .button, .save .actions button { width: auto; }
 #context { color: var(--secondary); }
 main { max-width: var(--read); }

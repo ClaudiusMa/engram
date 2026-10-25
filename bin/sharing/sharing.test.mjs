@@ -9,6 +9,7 @@ import { preparePackage, validatePackage, digest, MAX_FILE_BYTES } from './packa
 import { createSharingServer, LIFETIME } from './server.mjs';
 import { importSelection, fetchPackage } from './import.mjs';
 import { renderShareHtml, exportFilename, PACKAGE_FILENAME } from './export.mjs';
+import { defaultExportPath } from '../engram-sharing.mjs';
 import { createHash } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -482,7 +483,7 @@ async function recipientUI({ hash = '', selection: changes = {} } = {}) {
   let fetchHandler = async () => ({ ok: true, json: async () => selection });
   let clipboard = async value => { copies.push(value); };
   const window = { scrollY: 0, scrollTo(_, y) { this.scrollY = y; }, addEventListener(name, fn) { listeners[name] = fn; } };
-  const context = vm.createContext({ document: { createElement: tag => new Element(tag), getElementById: () => main }, location, history, window, Intl, Date: { now: () => now }, setInterval(fn) { intervals.push(fn); return intervals.length; }, clearInterval() {}, setTimeout(fn, delay) { timeouts.push({ fn, delay }); return timeouts.length; }, clearTimeout() {}, navigator: { clipboard: { writeText: value => clipboard(value) } }, fetch: (...args) => { requests.push(args); return fetchHandler(...args); } });
+  const context = vm.createContext({ document: { createElement: tag => new Element(tag), getElementById: () => main }, location, history, window, Intl, Date: { now: () => now }, setInterval(fn) { intervals.push(fn); return intervals.length; }, clearInterval() {}, setTimeout(fn, delay) { timeouts.push({ fn, delay }); return timeouts.length; }, clearTimeout() {}, navigator: { clipboard: { writeText: value => clipboard(value) } }, fetch: (...args) => { requests.push(args); return fetchHandler(...args); }, atob: value => Buffer.from(value, 'base64').toString('binary'), TextDecoder, Uint8Array });
   const source = await fs.readFile(path.join(root, 'bin/sharing/web/app.js'), 'utf8');
   vm.runInContext(source.replace(/load\(\);\s*$/u, ''), context);
   context.recipientView(selection);
@@ -651,9 +652,13 @@ test('export writes one self-contained file: strict policy, hashed inline assets
 test('export command writes an owner-only file under the private state directory', async t => {
   const item = await fixture(t); const stateDir = path.join(item.directory, '.local', 'engram-sharing'); await fs.mkdir(stateDir, { recursive: true, mode: 0o700 });
   await fs.writeFile(path.join(stateDir, 'prepared.json'), JSON.stringify(item.selection), { mode: 0o600 });
-  const run = spawnSync(process.execPath, [path.join(root, 'bin/engram-sharing.mjs'), 'export', '--state', stateDir], { encoding: 'utf8' });
+  const chosen = path.join(item.directory, 'sent', 'share.html');
+  const run = spawnSync(process.execPath, [path.join(root, 'bin/engram-sharing.mjs'), 'export', '--state', stateDir, '--out', chosen], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr); const out = run.stdout.match(/^Wrote (.*)$/mu)[1];
-  assert.equal(out, path.join(stateDir, 'export', 'Synthetic Evidence.html')); assert.equal((await fs.stat(out)).mode & 0o777, 0o600); assert.match(await fs.readFile(out, 'utf8'), /id="engram-share"/);
+  assert.equal(out, chosen);
+  const home = path.join(item.directory, 'home'); await fs.mkdir(path.join(home, 'Desktop'), { recursive: true });
+  assert.equal(defaultExportPath('Synthetic Evidence', stateDir, home), path.join(home, 'Desktop', 'Synthetic Evidence.html'), 'the file lands on the Desktop by default, where the person can see it');
+  assert.equal(defaultExportPath('Synthetic Evidence', stateDir, path.join(item.directory, 'nohome')), path.join(stateDir, 'export', 'Synthetic Evidence.html'), 'without a Desktop it stays in the private export folder'); assert.equal((await fs.stat(out)).mode & 0o777, 0o600); assert.match(await fs.readFile(out, 'utf8'), /id="engram-share"/);
   assert.match(run.stdout, /no link, server or email is needed/);
 });
 
@@ -670,4 +675,20 @@ test('exported page runs in file mode: no server calls, package-based instructio
   ui.setClipboard(async value => { ui.copies.push(value); }); await ui.click('Copy instruction'); await ui.settle();
   assert.equal(ui.copies[0], instruction); assert.equal(ui.requests.length, 0, 'copying in file mode needs no availability check');
   ui.click('Back to reading'); assert.equal(ui.location.hash, ''); assert.ok(ui.find('Save my Engram'));
+  assert.match(ui.main.textContent, /Original/); assert.match(ui.main.textContent, /The clip above is a preview\. This is the actual material being shared/); assert.match(ui.main.textContent, /Evidence\.txt · 4 B/);
+  const body = ui.all(ui.main).find(node => node.id === 'original-0'); assert.equal(body.hidden, true); assert.equal(body.textContent, '');
+  await ui.click('Show original'); assert.equal(body.hidden, false); assert.equal(body.textContent, 'test', 'the embedded bytes render as inert text'); assert.ok(ui.find('Hide original'));
+  await ui.click('Hide original'); assert.equal(body.hidden, true); assert.equal(body.textContent, 'test');
+  assert.ok(ui.find('Save file')); await ui.click('Save file'); assert.match(ui.main.textContent, /Couldn't save automatically\. Ask your agent to extract Evidence\.txt/);
+  assert.equal(ui.requests.length, 0, 'file mode never fetches, even for originals');
+});
+
+test('served page lists originals with metadata and loads text from the files endpoint', async () => {
+  const ui = await recipientUI({ selection: { files: [{ name: 'Evidence.txt', type: 'text/plain', size: 7, sha256: 'a'.repeat(64) }, { name: 'Scan.pdf', type: 'application/pdf', size: 2048, sha256: 'b'.repeat(64) }] } });
+  assert.match(ui.main.textContent, /Originals/); assert.match(ui.main.textContent, /Evidence\.txt · 7 B/); assert.match(ui.main.textContent, /Scan\.pdf · 2 KB/);
+  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent === 'Show original').length, 1, 'only text originals open inline');
+  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent === 'Save file').length, 2);
+  ui.setFetch(async url => url.endsWith('/files/0') ? { ok: true, arrayBuffer: async () => new TextEncoder().encode('served!').buffer } : { ok: true, json: async () => ui.selection });
+  await ui.click('Show original'); assert.equal(ui.all(ui.main).find(node => node.id === 'original-0').textContent, 'served!');
+  assert.equal(ui.requests.at(-1)[0], '/api/share/' + 'c'.repeat(43) + '/files/0');
 });
