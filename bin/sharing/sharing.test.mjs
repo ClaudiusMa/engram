@@ -510,7 +510,7 @@ test('export writes one self-contained file: strict policy, hashed inline assets
   assert.deepEqual([...new Set(urls)].sort(), ['http://www.w3.org/2000/svg', 'https://github.com/ClaudiusMa/engram'], 'no network references beyond the repository link and the SVG namespace');
   assert.equal(html.includes('src="/'), false); assert.equal(html.includes('href="/'), false);
   assert.equal(exportFilename('Global: Context / "Value"?'), 'Global Context Value.html'); assert.equal(exportFilename('   '), 'Engram share.html');
-  assert.match(html, /<pre class="original-text">Original &lt;b&gt;bytes&lt;\/b&gt; &amp; more\n<\/pre>/, 'the original is readable without JavaScript');
+  assert.match(html, /<p class="source-file">Evidence\.txt<\/p>/, 'the source is named without JavaScript'); assert.equal(html.includes('Original &lt;b&gt;bytes'), false, 'the original is a file to download, not page content');
   // The share file itself is the package: the importer reads the embedded block.
   const target = path.join(item.directory, 'vault'); const shareFile = path.join(item.directory, 'share.html'); await fs.writeFile(shareFile, html);
   const imported = await importSelection({ packageFile: shareFile, target, initialize: true });
@@ -532,44 +532,40 @@ test('export command writes an owner-only file under the private state directory
   assert.match(run.stdout, /no link, server or email is needed/);
 });
 
-test('recipient page: masthead, standfirst, the original in full, two ways to keep it', async () => {
-  const data = Buffer.from('# Heading\n\nA **bold** line with *italic* and `code` and a [link](https://example.invalid).\n\n- one\n- two\n\n> quoted\n\n---\n\nLast.').toString('base64');
+test('recipient page: masthead, brief, source link, one call to action', async () => {
+  const data = Buffer.from('# Heading\n\nBody.').toString('base64');
   const ui = await recipientUI({ selection: { url: undefined, expiresAt: undefined, localSetup: undefined, packageName: 'engram-selection.json', fileName: 'Synthetic selection.html', exportedAt: '2026-10-25T12:00:00Z', files: [{ name: 'Evidence.md', type: 'text/markdown', size: 90, sha256: 'a'.repeat(64), data }] } });
   await ui.settle();
   assert.equal(ui.requests.length, 0, 'file mode never fetches'); assert.equal(ui.intervals.length, 0); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 0);
   assert.match(ui.main.textContent, /^Demo sender shared this with you/); assert.equal(ui.main.querySelector('h1').textContent, 'Synthetic selection'); assert.equal(ui.focused, ui.main.querySelector('h1'));
-  assert.match(ui.main.textContent, /In short/); assert.match(ui.main.textContent, /Full final paragraph\./, 'the clip shows in full, no Show more');
-  assert.match(ui.main.textContent, /Separate synthetic thoughts/); assert.match(ui.main.textContent, /Demo's note to you/);
-  assert.match(ui.main.textContent, /The original/); assert.match(ui.main.textContent, /Evidence\.md · 90 B/);
-  const doc = ui.all(ui.main).find(node => node.className === 'document'); assert.ok(doc, 'markdown original renders as a document');
-  assert.deepEqual(doc.children.map(node => node.tagName), ['h3', 'p', 'ul', 'blockquote', 'hr', 'p']);
-  assert.equal(doc.children[0].textContent, 'Heading'); assert.equal(ui.all(doc).filter(node => node.tagName === 'strong')[0].textContent, 'bold'); assert.equal(ui.all(doc).filter(node => node.tagName === 'em')[0].textContent, 'italic'); assert.equal(ui.all(doc).filter(node => node.tagName === 'code')[0].textContent, 'code');
-  assert.equal(ui.all(doc).some(node => node.tagName === 'a'), false, 'links in shared content never become anchors'); assert.match(doc.children[1].textContent, /link \(https:\/\/example\.invalid\)/);
-  assert.equal(ui.all(doc).filter(node => node.tagName === 'li').length, 2); assert.equal(doc.children[3].textContent, 'quoted');
-  assert.match(ui.main.textContent, /Keep it/); assert.match(ui.main.textContent, /Download the file/); assert.match(ui.main.textContent, /Add it to your Engram/); assert.match(ui.main.textContent, /Engram is a personal knowledge folder/);
-  const download = ui.all(ui.main).find(node => node.tagName === 'button' && node.textContent === 'Download Evidence.md'); assert.ok(download);
-  await download.listeners.click(); assert.match(ui.main.textContent, /Couldn't download automatically\. Ask your agent to extract Evidence\.md/);
-  const add = ui.find('Add to my Engram'); assert.ok(add); const panel = ui.all(ui.main).find(node => node.id === 'add'); assert.equal(panel.hidden, true);
-  await add.listeners.click(); assert.equal(panel.hidden, false); assert.equal(add.attributes['aria-expanded'], 'true'); assert.equal(ui.focused.textContent, 'Add to your Engram');
+  assert.match(ui.main.textContent, /Full final paragraph\./, 'the brief shows in full'); assert.equal(ui.main.textContent.includes('In short'), false);
+  assert.match(ui.main.textContent, /Demo's note to you/);
+  assert.equal(ui.main.textContent.includes('Heading'), false, 'the source is not rendered on the page'); assert.equal(ui.main.textContent.includes('Body.'), false);
+  assert.match(ui.main.textContent, /Source/); const link = ui.all(ui.main).find(node => node.tagName === 'a' && node.className === 'source-link'); assert.equal(link.textContent, 'Evidence.md'); assert.equal(link.attributes.download, 'Evidence.md'); assert.match(ui.main.textContent, /Evidence\.md · 90 B/);
+  await link.listeners.click({ preventDefault() {} }); assert.match(ui.main.textContent, /Couldn't download automatically\. Ask your agent to extract Evidence\.md/);
+  const cta = ui.find('Save to Engram'); assert.ok(cta); assert.equal(cta.tagName, 'button'); const panel = ui.all(ui.main).find(node => node.id === 'add'); assert.equal(panel.hidden, true);
+  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && !['copy', 'disclosure'].includes(node.className)).length, 1, 'one call to action');
+  await cta.listeners.click(); assert.equal(panel.hidden, false); assert.equal(cta.attributes['aria-expanded'], 'true'); assert.equal(ui.focused.textContent, 'Save to your Engram');
+  assert.match(ui.main.textContent, /Engram is a personal knowledge folder/);
   const instruction = ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent;
-  assert.match(instruction, /Add the Engram share file "Synthetic selection\.html" to my Engram/); assert.match(instruction, /import --package "<path to the \.html file>" --target "<my folder>"/); assert.equal(instruction.includes('--url'), false); assert.equal(instruction.includes('engram-selection.json'), false, 'no second download');
+  assert.match(instruction, /Add the Engram share file "Synthetic selection\.html" to my Engram/); assert.match(instruction, /import --package "<path to the \.html file>" --target "<my folder>"/); assert.equal(instruction.includes('--url'), false); assert.equal(instruction.includes('engram-selection.json'), false);
   assert.match(instruction, /wait for my answers before writing/); assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
   assert.match(ui.main.textContent, /never runs anything from this file/);
   const setup = ui.all(ui.main).find(node => node.id === 'setup'); assert.equal(setup.hidden, true); await ui.click("Don't have Engram yet? Set it up first"); assert.equal(setup.hidden, false);
-  assert.equal(ui.all(ui.main).find(node => node.id === 'setup-command').textContent, 'npx github:ClaudiusMa/engram init ~/Engram');
   assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'button' && node.className === 'copy').map(node => node.attributes['aria-label']), ['Copy instruction', 'Copy setup prompt', 'Copy command', 'Copy prompt', 'Copy prompt']);
   const links = ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')); assert.deepEqual(links.map(node => node.href), ['https://github.com/ClaudiusMa/engram'], 'the colophon link is the only outbound link');
   assert.match(ui.main.textContent, /This file makes no network requests/);
 });
 
-test('served page keeps expiry, availability and copy checks; originals come from the files endpoint', async () => {
+test('served page keeps expiry, availability and copy checks; sources download from the files endpoint', async () => {
   const ui = await recipientUI({ selection: { files: [{ name: 'Evidence.txt', type: 'text/plain', size: 7, sha256: 'a'.repeat(64) }, { name: 'Scan.pdf', type: 'application/pdf', size: 2048, sha256: 'b'.repeat(64) }] } });
-  ui.setFetch(async url => url.endsWith('/files/0') ? { ok: true, arrayBuffer: async () => new TextEncoder().encode('served!').buffer } : { ok: true, json: async () => ui.selection });
-  ui.context.recipientView(ui.selection); await ui.settle();
+  await ui.settle();
   assert.equal(ui.intervals.length, 1); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 1);
-  assert.match(ui.main.textContent, /The originals/); assert.match(ui.main.textContent, /Scan\.pdf · 2 KB/); assert.match(ui.main.textContent, /This is a pdf file\. Download it below/);
-  assert.equal(ui.all(ui.main).find(node => node.id === 'original-0').textContent, 'served!', 'text originals load from the files endpoint');
-  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'button' && node.textContent.startsWith('Download ')).length, 2);
+  assert.match(ui.main.textContent, /Sources/); assert.match(ui.main.textContent, /Scan\.pdf · 2 KB/);
+  assert.equal(ui.all(ui.main).filter(node => node.tagName === 'a' && node.className === 'source-link').length, 2);
+  ui.setFetch(async url => url.endsWith('/files/0') ? { ok: true, arrayBuffer: async () => new TextEncoder().encode('served!').buffer } : { ok: true, json: async () => ui.selection });
+  await ui.all(ui.main).find(node => node.tagName === 'a' && node.className === 'source-link').listeners.click({ preventDefault() {} });
+  assert.equal(ui.requests.at(-1)[0], '/api/share/' + 'c'.repeat(43) + '/files/0', 'the source bytes come from the files endpoint'); assert.match(ui.main.textContent, /Couldn't download automatically/, 'no Blob in the test stub');
   const instruction = ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent; assert.match(instruction, /import --url "http:\/\/127\.0\.0\.1:4318\/s\/c{43}"/); assert.match(instruction, /Verify that file's SHA-256/);
   assert.match(ui.main.textContent, /This page loads nothing from third parties/);
   ui.setFetch(async () => ({ ok: false, status: 410, json: async () => ({ error: 'expired remotely' }) }));
@@ -581,7 +577,7 @@ test('served page keeps expiry, availability and copy checks; originals come fro
     else assert.equal(other.main.textContent, "This share isn't availableCheck the link or ask the sender for a new one.");
   }
   const expiring = await recipientUI(); expiring.setNow(expiring.selection.expiresAt); await expiring.intervals[0]();
-  assert.equal(expiring.main.textContent, 'This share has expiredAsk the sender for a new link.'); assert.equal(expiring.find('Add to my Engram'), undefined);
+  assert.equal(expiring.main.textContent, 'This share has expiredAsk the sender for a new link.'); assert.equal(expiring.find('Save to Engram'), undefined);
 });
 
 test('recipient clipboard is serialized, honest on success, and visible/selectable on failure', async () => {

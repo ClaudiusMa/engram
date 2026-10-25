@@ -247,38 +247,21 @@ body.recipient .identity img, body.recipient .identity svg { width: 14px; height
 .masthead .when { color: var(--secondary); }
 .share h1 { margin: 40px 0 0; font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); overflow-wrap: anywhere; }
 .share .label { margin: 48px 0 12px; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--secondary); }
-.standfirst .label { margin-top: 32px; }
-.standfirst-text { font-size: 20px; line-height: 32px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.brief { margin-top: 24px; }
+.brief-text { font-size: 20px; line-height: 32px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
 .thoughts { margin: 0; padding: 0; border: 0; }
 .thoughts p { font-size: 18px; line-height: 30px; font-style: italic; }
-.originals { padding-top: 24px; border-top: 1px solid var(--rule); }
-.originals .label { margin-top: 0; }
-.original + .original { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--rule); }
-.original-name { font-size: 14px; line-height: 20px; color: var(--secondary); overflow-wrap: anywhere; }
-.original-body { margin-top: 20px; }
-.original-text { margin: 0; font: 400 15px/26px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
-.document { color: var(--text); }
-.document > * + * { margin-top: 16px; }
-.document h3 { margin: 32px 0 0; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -0.01em; }
-.document h4 { margin: 28px 0 0; font-size: 18px; line-height: 26px; font-weight: 600; }
-.document p { overflow-wrap: anywhere; }
-.document strong { font-weight: 600; }
-.document code { font: 400 15px/24px var(--mono); padding: 1px 5px; border-radius: 4px; background: var(--code); }
-.document blockquote { margin: 0; padding-left: 16px; border-left: 2px solid var(--rule); color: var(--secondary); }
-.document ul, .document ol { margin: 0; padding-left: 1.4em; }
-.document li + li { margin-top: 6px; }
-.document hr { margin: 24px 0; border: 0; border-top: 1px solid var(--rule); }
-.document .muted { color: var(--faint); }
-.keep { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--text); }
-.keep .label { margin-top: 0; }
-.keep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-.keep-option h2 { margin: 0 0 8px; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; }
-.keep-option p { font-size: 15px; line-height: 24px; color: var(--secondary); }
-.keep-option .button { margin-top: 16px; width: auto; gap: 8px; }
-.keep-option .button.secondary { background: transparent; border-color: var(--text); }
-.keep-option .button.secondary:hover { background: var(--block); }
-.keep-option .status { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--secondary); }
-.keep-option .status:empty { display: none; }
+.source { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.source .label { margin-top: 0; }
+.source-file { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; }
+.source-file + .source-file { margin-top: 6px; }
+.source-file .icon { color: var(--secondary); }
+.source-link { color: var(--text); text-decoration-color: var(--rule); text-underline-offset: 4px; overflow-wrap: anywhere; }
+.source-link:hover { text-decoration-color: currentColor; }
+.source-file .meta { color: var(--secondary); font-size: 14px; }
+.source .status { margin-top: 8px; }
+.cta { margin-top: 28px; width: auto; min-height: 52px; padding: 14px 22px; font-size: 16px; border-radius: 8px; background: var(--text); color: var(--bg); border-color: var(--text); }
+.cta[aria-expanded="true"] { background: transparent; color: var(--text); }
 .add { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rule); }
 .add h2 { margin: 0 0 8px; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; }
 .add h2:focus-visible { box-shadow: none; }
@@ -316,8 +299,7 @@ h1:focus-visible, h2:focus-visible { box-shadow: none; }
 @media (max-width: 600px) {
   body.recipient .shell { padding: 24px 20px 56px; }
   .share h1 { font-size: 34px; line-height: 38px; }
-  .standfirst-text { font-size: 18px; line-height: 29px; }
-  .keep-grid { grid-template-columns: 1fr; gap: 28px; }
-  .keep-option .button { width: 100%; }
+  .brief-text { font-size: 18px; line-height: 29px; }
+  .cta { width: 100%; }
   button.copy { width: 28px; }
 }

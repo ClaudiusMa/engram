@@ -19,7 +19,7 @@ For "share <page or note> with <person>". The agent prepares a reviewed humanize
 
 1. Read every selected original in full.
 2. Write the manifest at `.local/engram-sharing/<share-slug>.json` (`version: 1`). Use `--root wiki/main` and paths relative to it (`raw/<file>`, `notes/<file>`).
-3. `preview` is the complete humanized clip: prose that preserves the meaning of the originals, in plain words, long enough to stand alone. It adds no reasoning, caveats, or interpretation the originals do not contain. A source page's `My take` is not part of the clip unless the user says so.
+3. `preview` is a brief: a few sentences, in plain words, saying what the original is and what it covers, so the recipient knows whether to open it. It preserves the meaning of the originals and adds no reasoning, caveats, or interpretation they do not contain; the original itself travels with the file. A source page's `My take` is not part of the clip unless the user says so.
 4. Attribution fields follow the evidence rule in the root contract. `sender` is the name the user confirms for themself in this session. `author` and `source` come only from what the originals state; omit them when unsupported. `senderThoughts` holds only words the user typed for this share; never derive them from a take or a prior agent draft.
 5. Check the clip and each attribution field against the originals. Only then set `previewReviewed: true`.
 6. Show the user the clip, the attribution fields, and the file list. Continue only on their yes; apply their edits literally.
@@ -31,7 +31,7 @@ node bin/engram-sharing.mjs prepare --manifest .local/engram-sharing/<share-slug
 node bin/engram-sharing.mjs export
 ```
 
-- `export` writes `~/Desktop/<title>.html` (owner-only; the private `.local/engram-sharing/export/` folder only when there is no Desktop). Pass `--out <path>` only to a location the user named. The file embeds the reviewed package. The recipient's page reads like a document: who shared it and when, the title, the clip as a standfirst, then the original in full (Markdown rendered safely, other text as-is), then **Keep it** with two plain choices: **Download the file** (the original, for anyone) or **Add to my Engram**, which opens one instruction for their agent. That instruction points the agent at the share file itself (`import --package <the .html>`); there is no second download.
+- `export` writes `~/Desktop/<title>.html` (owner-only; the private `.local/engram-sharing/export/` folder only when there is no Desktop). Pass `--out <path>` only to a location the user named. The file embeds the reviewed package. The recipient's page is short: who shared it and when, the title, the brief, the source as a file link that downloads the original, and one call to action, **Save to Engram**, which opens one instruction for their agent. That instruction points the agent at the share file itself (`import --package <the .html>`); there is no second download.
 - Tell the user the path once, offer to reveal it in Finder, and stop. Sending is theirs: attachment, message, AirDrop. Do not email, upload, or post the file.
 - There is no link, server, expiry, or revocation: once sent, the recipient has it. Say so if the user asks whether it can be withdrawn.
 - The recipient needs the sharing tool from a published Engram to save the clip; the page walks them through setup. If the published Engram does not yet include sharing, say so.

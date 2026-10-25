@@ -221,43 +221,6 @@ function afterPrompts(selection) {
     ['Write your take', "Help me write my take on it. Ask me questions first, and don't write anything until I confirm."],
   ];
 }
-// A small, safe Markdown reader: headings, paragraphs, lists, quotes, rules, bold, italic, code. Links and images
-// become plain text, so nothing in a shared file can take the reader anywhere.
-function renderInline(target, text) {
-  const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*\n]+\*|_[^_\n]+_|!?\[[^\]]*\]\([^)]*\))/gu;
-  let last = 0;
-  for (const match of text.matchAll(pattern)) {
-    if (match.index > last) target.append(text.slice(last, match.index));
-    const token = match[0];
-    if (token.startsWith('**')) target.append(el('strong', token.slice(2, -2)));
-    else if (token.startsWith('`')) target.append(el('code', token.slice(1, -1)));
-    else if (token.startsWith('![')) target.append(el('span', `[image: ${token.slice(2, token.indexOf(']'))}]`, 'muted'));
-    else if (token.startsWith('[')) { target.append(token.slice(1, token.indexOf(']'))); target.append(el('span', ` (${token.slice(token.indexOf('(') + 1, -1)})`, 'muted')); }
-    else target.append(el('em', token.slice(1, -1)));
-    last = match.index + token.length;
-  }
-  if (last < text.length) target.append(text.slice(last));
-}
-function renderMarkdown(text) {
-  const root = el('div', undefined, 'document');
-  const lines = text.replace(/\r\n?/gu, '\n').split('\n');
-  let paragraph = [], list;
-  const flush = () => { if (paragraph.length) { const p = el('p'); renderInline(p, paragraph.join(' ')); root.append(p); paragraph = []; } list = undefined; };
-  for (const raw of lines) {
-    const line = raw.trimEnd();
-    const heading = line.match(/^(#{1,6})\s+(.*)$/u);
-    const item = line.match(/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/u);
-    if (!line.trim()) { flush(); continue; }
-    if (heading) { flush(); const h = el(heading[1].length === 1 ? 'h3' : 'h4'); renderInline(h, heading[2]); root.append(h); continue; }
-    if (/^(?:-{3,}|\*{3,}|_{3,})$/u.test(line.trim())) { flush(); root.append(el('hr')); continue; }
-    if (line.startsWith('>')) { flush(); const quote = el('blockquote'); renderInline(quote, line.replace(/^>\s?/u, '')); root.append(quote); continue; }
-    if (item) { if (!list) { if (paragraph.length) flush(); list = el(/^\s*\d/u.test(line) ? 'ol' : 'ul'); root.append(list); } const li = el('li'); renderInline(li, item[1]); list.append(li); continue; }
-    if (list) list = undefined;
-    paragraph.push(line.trim());
-  }
-  flush();
-  return root;
-}
 async function originalBytes(selection, index) {
   const file = selection.files[index];
   if (typeof file.data === 'string') { const binary = atob(file.data); const bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
@@ -347,57 +310,33 @@ function createRecipient(selection) {
     return [block, status];
   }
   function label(text) { return el('p', text, 'label'); }
-  function originalsSection() {
-    const section = el('section', undefined, 'originals'); section.id = 'original';
+  function sourceSection(openPanel) {
+    const section = el('section', undefined, 'source'); section.id = 'source';
     const files = Array.isArray(selection.files) ? selection.files : [];
-    section.append(label(files.length > 1 ? 'The originals' : 'The original'));
-    files.forEach((file, index) => {
-      const item = el('article', undefined, 'original');
-      const meta = el('p', `${file.name} · ${formatSize(file.size)}`, 'meta original-name');
-      const status = el('p', '', 'status'); status.setAttribute('role', 'status');
-      const body = el('div', undefined, 'original-body'); body.id = `original-${index}`;
-      item.append(meta, body, status); section.append(item);
-      if (TEXT_TYPES.includes(file.type)) {
-        body.append(el('p', 'Loading the original…', 'meta'));
-        originalBytes(selection, index).then(bytes => {
-          const text = new TextDecoder().decode(bytes);
-          body.replaceChildren(file.type === 'text/markdown' ? renderMarkdown(text) : el('pre', text, 'original-text'));
-        }).catch(() => { body.replaceChildren(el('p', "Couldn't load the original here. Download it below instead.", 'meta')); });
-      } else body.append(el('p', `This is a ${file.type.split('/').pop()} file. Download it below to open it.`, 'meta'));
-    });
-    return section;
-  }
-  function keepSection() {
-    const section = el('section', undefined, 'keep'); section.id = 'keep';
-    section.append(label('Keep it'));
-    const grid = el('div', undefined, 'keep-grid');
-    const files = Array.isArray(selection.files) ? selection.files : [];
-    // Option 1: just the file. Works for anyone.
-    const plain = el('div', undefined, 'keep-option');
-    plain.append(el('h2', files.length > 1 ? 'Download the files' : 'Download the file'), el('p', files.length > 1 ? 'The originals, exactly as shared. Open them with anything.' : `The original, exactly as shared. Open it with anything.`));
+    section.append(label(files.length > 1 ? 'Sources' : 'Source'));
     const status = el('p', '', 'status'); status.setAttribute('role', 'status');
     files.forEach((file, index) => {
-      const download = el('button', undefined, 'button secondary'); download.type = 'button';
-      download.append(icon('download'), el('span', files.length > 1 ? `Download ${file.name}` : `Download ${file.name.replace(/\.[^.]+$/u, '')}${file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : ''}`));
-      download.addEventListener('click', async () => {
+      const row = el('p', undefined, 'source-file');
+      const link = el('a', file.name, 'source-link'); link.href = '#source'; link.setAttribute('download', file.name); link.setAttribute('aria-label', `Download ${file.name}`);
+      link.addEventListener('click', async event => {
+        event.preventDefault?.();
         try { if (!saveBytes(await originalBytes(selection, index), file.name, file.type)) { status.textContent = `Couldn't download automatically. Ask your agent to extract ${file.name}.`; return; } status.textContent = `Downloading ${file.name}.`; }
-        catch { status.textContent = "Couldn't load the original."; }
+        catch { status.textContent = "Couldn't load the file."; }
       });
-      plain.append(download);
+      row.append(icon('download'), link, el('span', ` · ${formatSize(file.size)}`, 'meta'));
+      section.append(row);
     });
-    plain.append(status);
-    // Option 2: into an Engram, through the person's agent.
-    const engram = el('div', undefined, 'keep-option');
-    engram.append(el('h2', 'Add it to your Engram'), el('p', 'Engram is a personal knowledge folder that your AI agent keeps for you. Adding this saves the original and a page about it, and your agent asks what you took from it. Needs Claude Code, Codex or Cursor.'));
-    const open = el('button', undefined, 'button'); open.type = 'button'; open.id = 'add-toggle'; open.setAttribute('aria-expanded', 'false'); open.setAttribute('aria-controls', 'add'); open.textContent = 'Add to my Engram';
-    engram.append(open);
-    grid.append(plain, engram); section.append(grid);
-    return { section, open };
+    section.append(status);
+    const cta = el('button', 'Save to Engram', 'button cta'); cta.type = 'button'; cta.id = 'add-toggle'; cta.setAttribute('aria-expanded', 'false'); cta.setAttribute('aria-controls', 'add');
+    cta.addEventListener('click', () => openPanel());
+    section.append(cta);
+    return { section, cta };
   }
   function addPanel(token) {
     const panel = el('section', undefined, 'add'); panel.id = 'add'; panel.hidden = true;
-    const heading = el('h2', 'Add to your Engram'); heading.tabIndex = -1;
-    panel.append(heading, el('p', fileMode ? 'Paste this into Claude Code, Codex or Cursor and press Enter. Your agent will ask where this file is and where your Engram lives, then do the rest.' : 'Paste this into Claude Code, Codex or Cursor and press Enter. Your agent will ask where your Engram lives, then do the rest.', 'lead'));
+    const heading = el('h2', 'Save to your Engram'); heading.tabIndex = -1;
+    panel.append(heading, el('p', 'Engram is a personal knowledge folder that your AI agent keeps for you. Saving this adds the file and a page about it, and your agent asks what you took from it. Needs Claude Code, Codex or Cursor.', 'lead'));
+    panel.append(el('p', fileMode ? 'Paste this into your agent and press Enter. It will ask where this file is and where your Engram lives, then do the rest.' : 'Paste this into your agent and press Enter. It will ask where your Engram lives, then do the rest.', 'lead'));
     panel.append(...pastable('agent-instruction', agentInstruction(selection), { name: 'Copy instruction', noun: 'instruction', token, check: verify }));
     panel.append(el('p', fileMode
       ? 'What happens: your agent reads the package inside this file, checks every original against its recorded hash, saves the original and a page about it, and leaves your take empty until you confirm it. It never runs anything from this file, overwrites your files, or sends anything.'
@@ -424,19 +363,19 @@ function createRecipient(selection) {
     masthead.append(el('p', selection.sender ? `${selection.sender} shared this with you` : 'Shared with you', 'from'));
     if (selection.exportedAt) masthead.append(el('p', formatDate(selection.exportedAt), 'when'));
     page.append(masthead, el('h1', selection.title));
-    // The clip, in full, as the standfirst. It is the sender's own account of what this is.
-    const standfirst = el('section', undefined, 'standfirst'); standfirst.append(label('In short'), el('div', selection.preview, 'standfirst-text prose'));
-    page.append(standfirst);
+    // The brief: the sender's few sentences on what this is.
+    const brief = el('section', undefined, 'brief'); brief.append(el('div', selection.preview, 'brief-text prose'));
+    page.append(brief);
     if (selection.senderThoughts) { const thoughts = el('section', undefined, 'thoughts'); thoughts.append(label(`${selection.sender ? selection.sender.split(' ')[0] + "'s" : "Sender's"} note to you`), el('p', selection.senderThoughts, 'prose')); page.append(thoughts); }
-    page.append(originalsSection());
-    const keep = keepSection(); const add = addPanel(token);
-    page.append(keep.section, add.panel);
+    const add = addPanel(token);
+    let openAdd;
+    const source = sourceSection(() => { if (!available()) return; openAdd(); try { history.replaceState(null, '', location.pathname + '#add'); } catch { /* file: URLs may refuse */ } });
+    page.append(source.section, add.panel);
     const footer = el('footer', undefined, 'colophon');
     const repo = el('a', 'Engram', 'colophon-link'); repo.href = REPO; repo.target = '_blank'; repo.rel = 'noreferrer noopener';
     footer.append(el('span', 'Shared with '), repo, el('span', ', open-source personal knowledge. ' + (fileMode ? 'This file makes no network requests.' : 'This page loads nothing from third parties.')));
     page.append(footer);
-    const openAdd = (focus = true) => { add.panel.hidden = false; keep.open.setAttribute('aria-expanded', 'true'); keep.open.textContent = 'Instructions below'; if (focus) { add.heading.focus({ preventScroll: true }); add.panel.scrollIntoView?.({ block: 'start' }); } };
-    keep.open.addEventListener('click', () => { if (!available()) return; openAdd(); try { history.replaceState(null, '', location.pathname + '#add'); } catch { /* file: URLs may refuse */ } });
+    openAdd = (focus = true) => { add.panel.hidden = false; source.cta.setAttribute('aria-expanded', 'true'); if (focus) { add.heading.focus({ preventScroll: true }); add.panel.scrollIntoView?.({ block: 'start' }); } };
     main.replaceChildren(page);
     if ((location.hash || '') === '#add') openAdd(false);
   }
