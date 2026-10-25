@@ -1,6 +1,15 @@
 # Engram sharing
 
-This local implementation packages an explicit source selection, serves a complete reviewed humanized clip for seven days, and imports the selection into a recipient's local Engram. It uses Node 18 or newer and no added dependencies. The browser's **Save my Engram** button opens one page of three sections in the manner of a library's install docs: **Setup** (what Engram is, the Terminal command, or a one-sentence prompt for the agent, and what gets created), **Save** (one short paragraph to paste into Codex, Claude, or Cursor, with **Copy instruction**, followed by what the agent will and will not do), and **Prompts to try after saving**. Every pastable text sits in a quiet block the person can read before copying; the visual contract (column, palette, type, rhythm, copy control states) follows DialKit's install section, resolved from its stylesheet, and the recipient document carries `body.recipient` so those values never touch the sender page. The only outbound link is the repository root, never a file path that a later change could break. Importing and discussion happen in the recipient's agent session.
+Sharing packages an explicit source selection with a complete reviewed humanized clip and writes **one self-contained HTML file** to send. The recipient opens it anywhere, reads the clip, saves the embedded package with one button, and pastes a short instruction into Codex, Claude, or Cursor; their agent imports it additively into their Engram and opens the discussion. Nothing depends on a server, a link, or the sender's computer being on. It uses Node 18 or newer and no added dependencies.
+
+```sh
+node bin/engram-sharing.mjs prepare --manifest .local/engram-sharing/reviewed.json --root wiki/main
+node bin/engram-sharing.mjs export
+```
+
+`export` writes `.local/engram-sharing/export/<title>.html` with owner-only permissions; `--out` chooses another path. The file inlines the page's style and script under a hash-pinned Content-Security-Policy, makes no network request, and embeds the reviewed package as inert JSON. Its save page is the same one the link path shows (Setup, Save, Prompts to try), with a **Save package** button that downloads `engram-selection.json` and an instruction that tells the agent to run `import --package`. There is no expiry or revocation: once sent, the recipient has the file.
+
+The link path below (local server, seven-day capability links, optional tunnel, invitation outbox and relay) is **archived**: it still works and is tested, but it needs this computer awake and the service running, so it is not the default.
 
 ## Prepare and review
 

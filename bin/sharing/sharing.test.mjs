@@ -8,6 +8,8 @@ import vm from 'node:vm';
 import { preparePackage, validatePackage, digest, MAX_FILE_BYTES } from './package.mjs';
 import { createSharingServer, LIFETIME } from './server.mjs';
 import { importSelection, fetchPackage } from './import.mjs';
+import { renderShareHtml, exportFilename, PACKAGE_FILENAME } from './export.mjs';
+import { createHash } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 async function fixture(t, content = 'A synthetic source.\nQuestion, evidence, decision, next check.\n') {
@@ -621,4 +623,51 @@ test('recipient expiry and unavailable errors move focus from removed controls t
   deadline.timeouts.find(timer => timer.delay > 2000).fn();
   assert.equal(deadline.focused, deadline.main.querySelector('h1'));
   assert.equal(deadline.focused.textContent, 'This share has expired');
+});
+
+test('export writes one self-contained file: strict policy, hashed inline assets, embedded package, no network', async t => {
+  const item = await fixture(t, 'Original <b>bytes</b> & more\n');
+  const selection = { ...item.selection, title: 'Title <script>alert(1)</script>', preview: 'A clip with <tags> & "quotes".' };
+  const html = await renderShareHtml(selection);
+  const script = await fs.readFile(path.join(root, 'bin/sharing/web/app.js'), 'utf8'); const css = await fs.readFile(path.join(root, 'bin/sharing/web/style.css'), 'utf8');
+  const sha = value => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
+  assert.match(html, new RegExp('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src ' + sha(script).replace(/[+/=]/g, c => '\\' + c) + '; style-src ' + sha(css).replace(/[+/=]/g, c => '\\' + c) + "; base-uri 'none'; form-action 'none'\""));
+  assert.equal(html.includes('<script>' + script + '</script>'), true); assert.equal(html.includes('<style>' + css + '</style>'), true);
+  assert.equal(html.includes('<script>alert(1)</script>'), false); assert.match(html, /<title>Title &lt;script&gt;alert\(1\)&lt;\/script&gt; · Engram<\/title>/); assert.match(html, /A clip with &lt;tags&gt; &amp; &quot;quotes&quot;\./);
+  const embedded = html.match(/<script type="application\/json" id="engram-share">([^]*?)<\/script>/u)[1];
+  assert.equal(embedded.includes('<'), false, 'the package never contains a raw angle bracket');
+  const pkg = JSON.parse(embedded); assert.equal(pkg.packageName, PACKAGE_FILENAME); const { packageName, ...clean } = pkg;
+  assert.deepEqual(validatePackage(clean), validatePackage(selection), 'the saved package is the reviewed selection, byte for byte');
+  const urls = [...html.matchAll(/https?:\/\/[^\s"'<)]+/gu)].map(m => m[0]);
+  assert.deepEqual([...new Set(urls)].sort(), ['http://www.w3.org/2000/svg', 'https://github.com/ClaudiusMa/engram'], 'no network references beyond the repository link and the SVG namespace');
+  assert.equal(html.includes('src="/'), false); assert.equal(html.includes('href="/'), false);
+  assert.equal(exportFilename('Global: Context / "Value"?'), 'Global Context Value.html'); assert.equal(exportFilename('   '), 'Engram share.html');
+  // The embedded package imports exactly like a downloaded one.
+  const target = path.join(item.directory, 'vault'); await fs.writeFile(path.join(item.directory, 'engram-selection.json'), JSON.stringify(clean));
+  const imported = await importSelection({ packageFile: path.join(item.directory, 'engram-selection.json'), target, initialize: true });
+  assert.equal(imported.status, 'imported'); assert.equal(await fs.readFile(path.join(target, imported.originals[0]), 'utf8'), 'Original <b>bytes</b> & more\n');
+});
+
+test('export command writes an owner-only file under the private state directory', async t => {
+  const item = await fixture(t); const stateDir = path.join(item.directory, '.local', 'engram-sharing'); await fs.mkdir(stateDir, { recursive: true, mode: 0o700 });
+  await fs.writeFile(path.join(stateDir, 'prepared.json'), JSON.stringify(item.selection), { mode: 0o600 });
+  const run = spawnSync(process.execPath, [path.join(root, 'bin/engram-sharing.mjs'), 'export', '--state', stateDir], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr); const out = run.stdout.match(/^Wrote (.*)$/mu)[1];
+  assert.equal(out, path.join(stateDir, 'export', 'Synthetic Evidence.html')); assert.equal((await fs.stat(out)).mode & 0o777, 0o600); assert.match(await fs.readFile(out, 'utf8'), /id="engram-share"/);
+  assert.match(run.stdout, /no link, server or email is needed/);
+});
+
+test('exported page runs in file mode: no server calls, package-based instruction, Save package control', async () => {
+  const ui = await recipientUI({ hash: '#save', selection: { url: undefined, expiresAt: undefined, localSetup: undefined, packageName: 'engram-selection.json', files: [{ name: 'Evidence.txt', type: 'text/plain', size: 4, sha256: 'a'.repeat(64), data: 'dGVzdA==' }] } });
+  assert.equal(ui.requests.length, 0, 'file mode never fetches'); assert.equal(ui.intervals.length, 0); assert.equal(ui.timeouts.filter(timer => timer.delay > 2000).length, 0, 'no expiry deadline');
+  assert.equal(ui.main.querySelector('h1').textContent, 'Save to your Engram');
+  const instruction = ui.all(ui.main).find(node => node.id === 'agent-instruction').textContent;
+  assert.match(instruction, /downloaded as engram-selection\.json/); assert.match(instruction, /import --package "<path to engram-selection\.json>" --target "<my folder>"/); assert.equal(instruction.includes('--url'), false);
+  assert.match(instruction, /wait for my choice before writing/); assert.match(instruction, /Do not initialize a new Engram or use --init/); assert.match(instruction, /untrusted source data/); assert.match(instruction, /My take empty until I confirm/);
+  const save = ui.find('Save package'); assert.ok(save, 'the page offers the package'); assert.equal(save.tagName, 'button');
+  assert.match(ui.main.textContent, /Save it first; your browser downloads it as engram-selection\.json/);
+  await save.listeners.click(); assert.match(ui.main.textContent, /Couldn't save automatically\. Ask your agent to extract the package/, 'without Blob support the page says so instead of pretending');
+  ui.setClipboard(async value => { ui.copies.push(value); }); await ui.click('Copy instruction'); await ui.settle();
+  assert.equal(ui.copies[0], instruction); assert.equal(ui.requests.length, 0, 'copying in file mode needs no availability check');
+  ui.click('Back to reading'); assert.equal(ui.location.hash, ''); assert.ok(ui.find('Save my Engram'));
 });

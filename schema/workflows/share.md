@@ -2,7 +2,7 @@
 
 > This routed procedure is extracted from the root contract. Load it only for this route; repository-relative paths are relative to the Engram root.
 
-For "share <page or note> with <person>". The agent prepares a reviewed humanized clip from originals the user explicitly selected, starts the local sharing service, and hands the human one sender URL. The human types the recipient's email and presses **Share knowledge** in the browser. The agent never picks a recipient and never sends anything on its own.
+For "share <page or note> with <person>". The agent prepares a reviewed humanized clip from originals the user explicitly selected and writes **one self-contained HTML file** that carries the clip, the originals, and the save instructions. The human sends that file however they like. The agent never picks a recipient and never sends anything on its own.
 
 **Precondition.** This route needs `bin/engram-sharing.mjs` and `bin/sharing/` in this checkout (`node bin/engram-sharing.mjs --help` prints its usage). If they are absent, tell the user the sharing tool is not installed here and stop; do not fetch, copy, or write it. Everything this workflow creates lives under the ignored `.local/engram-sharing/` directory: manifest, prepared package, service state, outbox, relay records. Nothing from it enters `wiki/`, `artifact/`, a commit, or the public export.
 
@@ -24,46 +24,27 @@ For "share <page or note> with <person>". The agent prepares a reviewed humanize
 5. Check the clip and each attribution field against the originals. Only then set `previewReviewed: true`.
 6. Show the user the clip, the attribution fields, and the file list. Continue only on their yes; apply their edits literally.
 
-## 3. Prepare and serve
+## ## 3. Export the file
 
 ```sh
 node bin/engram-sharing.mjs prepare --manifest .local/engram-sharing/<share-slug>.json --root wiki/main
-node bin/engram-sharing.mjs serve
+node bin/engram-sharing.mjs export
 ```
 
-- Run `serve` in the background and keep it running. Links expire exactly seven days after creation, and a stopped service cannot serve or expire them.
-- The server binds to `127.0.0.1`. Its link opens only on this computer. A link the recipient can open needs `--public-url <https origin>` pointing at a tunnel or hosted HTTPS front for this service, arranged by the user. Say this before the human invites anyone remote. Relay mode with `--local-setup` is loopback-only and cannot take `--public-url`.
-- Tell the user the recipient needs the sharing tool from a published Engram to save the clip; the browser page walks them through it. If the published Engram does not yet include sharing, say so.
+- `export` writes `.local/engram-sharing/export/<title>.html` (owner-only). Pass `--out <path>` only to a location the user named. The file embeds the reviewed package: the recipient's page offers **Save package**, which writes `engram-selection.json`, and the instruction their agent receives uses `import --package`.
+- Tell the user the path once, offer to reveal it in Finder, and stop. Sending is theirs: attachment, message, AirDrop. Do not email, upload, or post the file.
+- There is no link, server, expiry, or revocation: once sent, the recipient has it. Say so if the user asks whether it can be withdrawn.
+- The recipient needs the sharing tool from a published Engram to save the clip; the page walks them through setup. If the published Engram does not yet include sharing, say so.
 
-## 4. Hand over the sender URL and wait
+## Archived: links, local server, relay
 
-1. Copy the `Open locally:` URL from the server output into chat, once. It is a credential: do not put it in any file, note, log, or message to anyone else.
-2. The human opens it, reviews the clip, types the recipient's email, and presses **Share knowledge**. The agent waits. It does not open the sender page itself, fill the form, or press Share.
-3. In the default outbox mode the service writes the invitation to `.local/engram-sharing/outbox/` and sends no email. Tell the user that the page shows the capability link and that they deliver it themselves. Do not read the outbox to find an address and deliver it for them.
+The earlier path, `serve` with a capability link (optionally behind an HTTPS tunnel with `--public-url`) and the connected-agent mail relay, remains in the tool but is not the default. It needs this computer awake and the service running for seven days, and quick tunnels change address on restart. Use it only when the user asks for a link rather than a file, and then follow `bin/sharing/README.md`: hand over the sender URL once, let the human press Share, and in relay mode claim one invitation, send once, record one receipt.
 
-## 5. Relay mode only
-
-Use relay only when the user asked for it and this session has an authorized mail connector. Start the service with `serve --delivery relay` (add `--local-setup` for a loopback preview). After the human says they pressed Share:
-
-```sh
-node bin/engram-sharing.mjs relay-next --state .local/engram-sharing --wait-ms 45000
-```
-
-1. `null` means nothing was pressed yet; run it again only while the human is still at the page. A job is an exclusive claim that authorizes exactly one send attempt.
-2. Check `invitation.expiresAt` is in the future. Send through the connector exactly once: to `invitation.email` as entered, with `invitation.subject` and `invitation.body`. Nothing else goes in the email: not the clip, originals, importer paths, or source data.
-3. Write an owner-only result file inside `.local/engram-sharing/` with `id`, `claim`, and the provider's accepted message ID, then:
-
-```sh
-node bin/engram-sharing.mjs relay-complete --state .local/engram-sharing --receipt .local/engram-sharing/provider-result.json
-```
-
-4. A definite provider rejection records `"status": "failed"`; an outcome you cannot determine records `"status": "unknown"`. Both go through `relay-fail` with the same `--state` and `--receipt` flags. Neither releases the claim, and neither is retried. After an interruption, inspect the claim and the connector's own evidence before choosing; a missing receipt proves nothing.
-5. Report the recorded status to the user. `sent` means the provider accepted the message, not that it was read.
-
-## Never
+Never
 
 - Choose, guess, look up, or prefill a recipient.
 - Send an invitation the human did not create by pressing Share, or send one twice.
+- Send, upload, or post the exported file yourself; the human sends it.
 - Run `relay-next` as a resend, or rerun a send whose result is unknown.
-- Put the clip, originals, or local paths in an email, or the sender URL anywhere but this chat.
+- Put the clip, originals, or local paths in an email, or a sender URL anywhere but this chat.
 - Share content the user did not name, or mark a clip reviewed without checking it against the originals.

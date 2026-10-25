@@ -33,7 +33,7 @@
     --active: #1f1f1f;
     --error: #ff565f;
   }
-  .identity img { filter: invert(1); }
+  .identity img, .identity svg { filter: invert(1); }
 }
 *, *::before, *::after { box-sizing: border-box; }
 body {
@@ -62,7 +62,9 @@ body {
   font-weight: 500;
   line-height: 24px;
 }
-.identity img { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+.identity img, .identity svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+.save .actions { margin: 16px 0 0; }
+.save .actions .button, .save .actions button { width: auto; }
 #context { color: var(--secondary); }
 main { max-width: var(--read); }
 h1, h2, h3, strong, .lede { color: var(--text); }
