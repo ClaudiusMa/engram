@@ -328,7 +328,10 @@ function createRecipient(selection) {
   function addPanel(token) {
     const panel = el('section', undefined, 'add'); panel.id = 'add'; panel.hidden = true;
     const heading = el('h2', 'Save to your Engram'); heading.tabIndex = -1;
-    panel.append(heading, el('p', 'Engram is a personal knowledge folder that your AI agent keeps for you. Saving this adds the file and a page about it, and your agent asks what you took from it. Needs Claude Code, Codex or Cursor.', 'lead'));
+    const intro = el('p', undefined, 'lead');
+    const repoLink = el('a', 'Engram', 'inline-link'); repoLink.href = REPO; repoLink.target = '_blank'; repoLink.rel = 'noreferrer noopener';
+    intro.append(repoLink, ' is a personal knowledge folder that your AI agent keeps for you. Saving this adds the file and a page about it, and your agent asks what you took from it. Needs Claude Code, Codex or Cursor.');
+    panel.append(heading, intro);
     // Setup comes first, folded: the natural question before pasting anything is whether you have Engram at all.
     const setupToggle = el('button', "Don't have Engram yet? Set it up first", 'disclosure'); setupToggle.type = 'button'; setupToggle.setAttribute('aria-expanded', 'false'); setupToggle.setAttribute('aria-controls', 'setup');
     const setup = el('div', undefined, 'setup'); setup.id = 'setup'; setup.hidden = true;

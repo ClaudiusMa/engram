@@ -290,7 +290,8 @@ body.recipient .identity img, body.recipient .identity svg { width: 14px; height
 .icon { display: inline-flex; line-height: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .colophon { margin-top: 112px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 20px; color: var(--secondary); }
-.colophon-link { color: var(--text); text-decoration-color: var(--rule); }
+.colophon-link, .inline-link { color: var(--text); text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.inline-link:hover { text-decoration-color: currentColor; }
 h1:focus-visible, h2:focus-visible { box-shadow: none; }
 @media (max-width: 600px) {
   body.recipient .shell { padding: 32px 20px 72px; }

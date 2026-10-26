@@ -558,7 +558,7 @@ test('recipient page: masthead, brief, source link, one call to action', async (
   const setup = ui.all(ui.main).find(node => node.id === 'setup'); assert.equal(setup.hidden, true); await ui.click("Don't have Engram yet? Set it up first"); assert.equal(setup.hidden, false);
   const order = panel.children.map(node => node.id || node.className || node.tagName); assert.ok(order.indexOf('setup') < order.indexOf('lead paste'), 'setup comes before the paste instruction');
   assert.deepEqual(ui.all(ui.main).filter(node => node.tagName === 'button' && node.className === 'copy').map(node => node.attributes['aria-label']), ['Copy setup prompt', 'Copy command', 'Copy instruction']); assert.equal(ui.main.textContent.includes('Afterwards'), false);
-  const links = ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')); assert.deepEqual(links.map(node => node.href), ['https://github.com/ClaudiusMa/engram'], 'the colophon link is the only outbound link');
+  const links = ui.all(ui.main).filter(node => node.tagName === 'a' && node.href?.startsWith('https://')); assert.deepEqual([...new Set(links.map(node => node.href))], ['https://github.com/ClaudiusMa/engram'], 'the repository is the only outbound destination'); assert.equal(links.length, 2, 'the intro word and the colophon both link to it');
   assert.match(ui.main.textContent, /This file makes no network requests/);
 });
 
