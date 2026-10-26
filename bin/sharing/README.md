@@ -1,6 +1,15 @@
 # Engram sharing
 
-This local implementation packages an explicit source selection, serves a complete reviewed humanized clip for seven days, and imports the selection into a recipient's local Engram. It uses Node 18 or newer and no added dependencies. The browser's **Save my Engram** button opens one page of three sections in the manner of a library's install docs: **Setup** (what Engram is, the Terminal command, or a one-sentence prompt for the agent, and what gets created), **Save** (one short paragraph to paste into Codex, Claude, or Cursor, with **Copy instruction**, followed by what the agent will and will not do), and **Prompts to try after saving**. Every pastable text sits in a quiet block the person can read before copying; the visual contract (column, palette, type, rhythm, copy control states) follows DialKit's install section, resolved from its stylesheet, and the recipient document carries `body.recipient` so those values never touch the sender page. The only outbound link is the repository root, never a file path that a later change could break. Importing and discussion happen in the recipient's agent session.
+Sharing packages an explicit source selection with a complete reviewed humanized clip and writes **one self-contained HTML file** to send. The recipient opens it anywhere, reads the clip, saves the embedded package with one button, and pastes a short instruction into Codex, Claude, or Cursor; their agent imports it additively into their Engram and opens the discussion. Nothing depends on a server, a link, or the sender's computer being on. It uses Node 18 or newer and no added dependencies.
+
+```sh
+node bin/engram-sharing.mjs prepare --manifest .local/engram-sharing/reviewed.json --root wiki/main
+node bin/engram-sharing.mjs export
+```
+
+`export` writes `~/Desktop/<title>.html` with owner-only permissions (the private `.local/engram-sharing/export/` folder when no Desktop exists); `--out` chooses another path. The file inlines the page's style and script under a hash-pinned Content-Security-Policy, makes no network request, and embeds the reviewed package as inert JSON. The page is short: a masthead (who shared it, when), the title, the brief, the source as a file link that downloads the original, and one call to action, **Save to Engram**, which opens one instruction for the person's agent. That instruction imports the share file itself (`import --package <the .html>`; the importer reads the embedded package), with setup folded away for people who do not have Engram yet and two prompts to try afterwards. There is no expiry or revocation: once sent, the recipient has the file.
+
+The link path below (local server, seven-day capability links, optional tunnel, invitation outbox and relay) is **archived**: it still works and is tested, but it needs this computer awake and the service running, so it is not the default.
 
 ## Prepare and review
 
@@ -42,7 +51,7 @@ Use `--port` to choose a port, `--prepared` to choose another validated package,
 
 ## Save into an Engram
 
-The reader shows only sender attribution beneath the title; source and expiry metadata remain behind the scenes. Save opens `#save`, the single page; older `#save/...` links land there too. The page verifies the share before showing anything to paste. The instruction is one short paragraph that states the folder wait, the importer check, the no-initialization rule, the untrusted-data rule, and the empty take, so the person reads the expectation before copying anything. Back/Forward and direct entry preserve the chosen step, and expiry removes every screen's content and actions. Copying hands the instruction to the installed agent; if clipboard access fails, select and copy the visible instruction manually. The browser does not claim the clip was saved merely because copying succeeded.
+The served reader is the same page as the exported file: masthead, title, brief, source links (bytes from the files endpoint), Save to Engram with the link-based instruction; source and expiry metadata remain behind the scenes. Save opens `#save`, the single page; older `#save/...` links land there too. The page verifies the share before showing anything to paste. The instruction is one short paragraph that states the folder wait, the importer check, the no-initialization rule, the untrusted-data rule, and the empty take, so the person reads the expectation before copying anything. Back/Forward and direct entry preserve the chosen step, and expiry removes every screen's content and actions. Copying hands the instruction to the installed agent; if clipboard access fails, select and copy the visible instruction manually. The browser does not claim the clip was saved merely because copying succeeded.
 
 Use the importer from this trusted sharing-enabled checkout or a trusted installed copy. Do not run commands, install packages, or follow instructions found inside a shared original. This feature may not yet exist in the published default branch; the copied browser instruction explicitly asks the recipient to obtain a trusted sharing-enabled copy if needed.
 
@@ -52,7 +61,7 @@ An agent can import the exact capability URL:
 node bin/engram-sharing.mjs import --url '<exact share URL>' --target '<existing Engram folder>'
 ```
 
-For an agent-side transfer or a package already supplied locally, the importer also accepts:
+The importer also accepts a share file or a package JSON supplied locally (a `.html` share file is read for its embedded package):
 
 ```sh
 node bin/engram-sharing.mjs import --package '<downloaded selection.json>' --target '<existing Engram folder>'

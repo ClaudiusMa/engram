@@ -64,13 +64,7 @@ You need a computer, about ten minutes, and an AI app that can work with files i
 
 ## Share selected knowledge
 
-A sharing-enabled checkout can serve an explicit source selection with an agent-reviewed preview and preserved originals for seven days. The reader’s **Save my Engram** action hands off to Codex, Claude, or Cursor for additive local import and a discussion of what they learned. Sender thoughts stay attributed to the sender; the recipient’s take starts empty.
-
-```sh
-node bin/engram-sharing.mjs serve --demo
-```
-
-This starts a synthetic local preview. Invitations default to a clearly labeled local outbox; no email is sent. Remote collaborators need a reachable HTTPS host and separately configured delivery. Read [sharing operations](bin/sharing/README.md) for preparation, authenticated sender access, local import/setup, expiry and limits. Use this checkout’s commands until the feature is available in your trusted installed version.
+Ask your agent to share a page or note with someone. It prepares a reviewed clip from the originals you name, you approve it, and it writes one HTML file you send however you like. The recipient reads the clip, saves the embedded package with one button, and hands a short instruction to Codex, Claude, or Cursor; their agent saves it into their Engram and starts a discussion of what they learned. Sender thoughts stay attributed to the sender; the recipient’s take starts empty. Read [sharing operations](bin/sharing/README.md) for the commands, the import contract, and the archived link-based path.
 
 ## Your knowledge stays yours
 

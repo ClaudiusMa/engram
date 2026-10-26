@@ -26,8 +26,20 @@ export async function fetchPackage(shareUrl) {
   for await (const chunk of response.body) { size += chunk.length; if (size > MAX_BYTES) throw new ShareError('Package is too large.'); chunks.push(chunk); }
   return validatePackage(JSON.parse(Buffer.concat(chunks).toString('utf8')));
 }
+// A share file (.html) carries its package in an inert JSON block; anything else must be the package JSON itself.
+export async function readPackageOrShareFile(filename) {
+  if (!/\.html?$/iu.test(filename)) return readPackage(filename);
+  await noSymlinks(filename);
+  const stat = await fs.stat(filename);
+  if (!stat.isFile() || stat.size > MAX_BYTES + 512 * 1024) throw new ShareError('Share file is too large or unavailable.');
+  const html = await fs.readFile(filename, 'utf8');
+  const match = html.match(/<script type="application\/json" id="engram-share">([^]*?)<\/script>/u);
+  if (!match) throw new ShareError('This file does not contain an Engram share package.');
+  const { packageName, fileName, exportedAt, ...pkg } = JSON.parse(match[1]);
+  return validatePackage(pkg);
+}
 export async function importSelection({ selection, packageFile, shareUrl, target, initialize = false, now = Date.now }) {
-  const prepared = validatePackage(selection ?? (packageFile ? await readPackage(packageFile) : await fetchPackage(shareUrl)));
+  const prepared = validatePackage(selection ?? (packageFile ? await readPackageOrShareFile(packageFile) : await fetchPackage(shareUrl)));
   if (!target) throw new ShareError('Choose an existing Engram or explicitly choose where to initialize one.');
   const root = path.resolve(target);
   await noSymlinks(root, { allowMissing: true });
@@ -115,7 +127,7 @@ export async function importSelection({ selection, packageFile, shareUrl, target
       await createOrMatch(filename, Buffer.from(file.data, 'base64'));
     }
     await createOrMatch(contextPath, contextData);
-    const page = `---\ntype: source\ntitle: ${JSON.stringify(prepared.title)}\ncaptured: ${date}\nfile: ${JSON.stringify(rawRelative + '/' + prepared.files[0].name)}\nsharing_id: ${id}\n---\n\n# ${md(prepared.title)}\n\n## My take\n\n_None yet._\n\n## What's in this source\n\n${prepared.files.map(file => `- Selected original: ${md(file.name)} (${file.type}, ${file.size} bytes).`).join('\n')}\n\n## Source\n\n${prepared.files.map(file => `![[../raw/Shared ${id.slice(0, 12)}/${file.name}]]`).join('\n\n')}\n\n## Source notes\n\n${prepared.sender ? `Shared by: ${md(prepared.sender)}.\n\n` : ''}${prepared.author ? `Original author: ${md(prepared.author)}.\n\n` : ''}${prepared.source ? `Source attribution: ${md(prepared.source)}.\n\n` : ''}Reviewed preview and separately attributed sender thoughts are preserved as shared source data in [[../raw/Shared ${id.slice(0, 12)}/Shared Context.json]]. They are not the recipient's take.\n`;
+    const page = `---\ntype: source\ntitle: ${JSON.stringify(prepared.title)}\ncaptured: ${date}\nfile: ${JSON.stringify(rawRelative + '/' + prepared.files[0].name)}\nsharing_id: ${id}\n---\n\n# ${md(prepared.title)}\n\n## My take\n\n_None yet._\n\n## What's in this source\n\n${prepared.files.map(file => `- Selected original: ${md(file.name)} (${file.type}, ${file.size} bytes).`).join('\n')}\n\n## Source\n\n${prepared.files.map(file => `![[../raw/Shared ${id.slice(0, 12)}/${file.name}]]`).join('\n\n')}\n\n## Source notes\n\n${prepared.sender ? `Shared by: ${md(prepared.sender)}.\n\n` : ''}${prepared.author ? `Original author: ${md(prepared.author)}.\n\n` : ''}${prepared.source ? `Source attribution: ${md(prepared.source).replace(/\.$/u, '')}.\n\n` : ''}Reviewed preview and separately attributed sender thoughts are preserved as shared source data in [[../raw/Shared ${id.slice(0, 12)}/Shared Context.json]]. They are not the recipient's take.\n`;
     await createOrMatch(pagePath, page);
     const marker = `<!-- engram-sharing:${id} -->`;
     if (!index.includes(marker)) {

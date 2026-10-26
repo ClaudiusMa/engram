@@ -33,7 +33,7 @@
     --active: #1f1f1f;
     --error: #ff565f;
   }
-  .identity img { filter: invert(1); }
+  .identity img, .identity svg { filter: invert(1); }
 }
 *, *::before, *::after { box-sizing: border-box; }
 body {
@@ -62,7 +62,16 @@ body {
   font-weight: 500;
   line-height: 24px;
 }
-.identity img { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+.identity img, .identity svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+.save .actions { margin: 16px 0 0; }
+.originals { margin-top: 48px; }
+.originals h2 { margin: 0 0 8px; font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0; }
+.original { margin-top: 16px; }
+.original-name { margin: 0; color: var(--text); }
+.original .actions { margin: 12px 0 0; }
+.original .actions button { width: auto; }
+.original-text { margin: 16px 0 0; padding: 16px; border-radius: 12px; background: var(--block, var(--hover)); color: var(--text); font: 400 15px/24px var(--font); white-space: pre-wrap; overflow-wrap: anywhere; }
+.save .actions .button, .save .actions button { width: auto; }
 #context { color: var(--secondary); }
 main { max-width: var(--read); }
 h1, h2, h3, strong, .lede { color: var(--text); }
@@ -215,61 +224,82 @@ label { display: block; margin-bottom: 8px; color: var(--text); }
   font: 400 16px/24px var(--font);
 }
 
-/* Recipient document: DialKit's column and palette, per the save-page design contract.
-   Values resolved from joshpuckett.me/dialkit's stylesheets (Tailwind v3): max-w-2xl, px-6 py-16, neutral/stone scale. */
-body.recipient { --secondary: #525252; --faint: #a3a3a3; --block: #fafaf9; --code: #f5f5f4; --command: #404040; --copy-hover: #e5e5e5; --copy-hover-icon: #525252; -moz-osx-font-smoothing: grayscale; }
+/* Recipient document. Editorial and quiet: paper, hairline rules, one reading column, type does the work.
+   Direction from the user's Visor references (eagle:MSP0HIXKVFTMG, eagle:MSP0HM65ISMNY, eagle:MG8LFZ9DR6ZFK): big confident
+   type on light paper, thin rules, nothing decorative. Pastable blocks keep the DialKit treatment the user approved. */
+body.recipient {
+  --bg: #f4f4f1; --text: #161616; --secondary: #5d5d5a; --faint: #8f8f8b; --rule: #d6d6d1; --block: #e9e9e4; --code: #e9e9e4;
+  --command: #3d3d3a; --copy-hover: #dadad4; --copy-hover-icon: #3d3d3a; --accent: #161616;
+  -moz-osx-font-smoothing: grayscale;
+}
 @media (prefers-color-scheme: dark) {
-  body.recipient { --bg: #0a0a0a; --text: #f5f5f5; --secondary: #a3a3a3; --faint: #a3a3a3; --block: #262626; --code: #262626; --command: #d4d4d4; --copy-hover: #404040; --copy-hover-icon: #d4d4d4; }
+  body.recipient { --bg: #121212; --text: #ececea; --secondary: #a3a39e; --faint: #7c7c78; --rule: #2c2c2a; --block: #1e1e1c; --code: #1e1e1c; --command: #d4d4d0; --copy-hover: #333331; --copy-hover-icon: #ececea; --accent: #ececea; }
 }
-body.recipient .shell { width: 100%; max-width: 672px; padding: 64px 24px; }
+body.recipient { background: var(--bg); color: var(--text); }
+body.recipient .shell { width: 100%; max-width: 728px; padding: 56px 24px 96px; }
 body.recipient main { max-width: none; }
-.save h1 { margin: 8px 0 0; font-size: 30px; line-height: 36px; font-weight: 500; letter-spacing: -0.025em; }
-.save .description { margin: 16px 0 0; }
-.save section { margin-top: 64px; }
-.save .heading-row { display: flex; align-items: center; justify-content: space-between; }
-.save h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0; }
-.save h3 { margin: 32px 0 0; font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0; }
-.save p { margin: 0; }
-.save .lead { margin-top: 8px; }
-.save .follow { margin-top: 24px; }
-.save code { font: 400 14px/20px var(--mono); padding: 2px 6px; border-radius: 4px; background: var(--code); }
-.save .step-back { display: flex; margin: 0; }
-.save .back-link { display: inline-flex; align-items: center; gap: 8px; min-height: 0; padding: 12px 0; margin: -12px 0; font-size: 14px; line-height: 20px; color: var(--faint); text-decoration: none; }
-.save .back-link:hover, .save .back-link:focus-visible { color: var(--text); }
-.icon-link { display: inline-flex; padding: 12px; margin: -12px; color: var(--faint); border-radius: 6px; }
-.icon-link:hover, .icon-link:focus-visible { color: var(--text); }
-.icon { display: inline-flex; line-height: 0; }
-.block { position: relative; overflow: hidden; margin: 16px 0 0; border-radius: 12px; background: var(--block); }
+body.recipient .identity { margin-bottom: 56px; font-size: 14px; color: var(--secondary); }
+body.recipient .identity img, body.recipient .identity svg { width: 14px; height: 14px; opacity: .8; }
+.share { font-size: 17px; line-height: 28px; }
+.share p { margin: 0; }
+.share h1 { margin: 0; font-size: 44px; line-height: 50px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); overflow-wrap: anywhere; }
+.share .label { margin: 0 0 16px; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--secondary); }
+.brief { margin-top: 32px; }
+.brief-text { font-size: 20px; line-height: 32px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.thoughts { margin: 0; padding: 0; border: 0; }
+.thoughts p { font-size: 18px; line-height: 30px; font-style: italic; }
+.source { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--rule); }
+.source-file { display: flex; align-items: center; gap: 10px; font-size: 17px; line-height: 26px; }
+.source-file + .source-file { margin-top: 8px; }
+.source-file .icon { color: var(--secondary); }
+.source-link { color: var(--text); text-decoration-color: var(--rule); text-underline-offset: 4px; overflow-wrap: anywhere; }
+.source-link:hover { text-decoration-color: currentColor; }
+.source-file .meta { color: var(--secondary); font-size: 14px; }
+.source .status { margin-top: 8px; }
+.cta { margin-top: 48px; width: auto; min-height: 52px; padding: 14px 24px; font-size: 16px; border-radius: 8px; background: var(--text); color: var(--bg); border-color: var(--text); }
+.cta[aria-expanded="true"] { background: transparent; color: var(--text); }
+.add { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--rule); }
+.add h2 { margin: 0 0 8px; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; }
+.add h2:focus-visible { box-shadow: none; }
+.add h3 { margin: 40px 0 8px; font-size: 17px; line-height: 26px; font-weight: 600; }
+.add .lead, .add .follow { font-size: 15px; line-height: 24px; color: var(--secondary); }
+.add .follow { margin-top: 16px; }
+.add .lead.paste { margin-top: 32px; }
+.add .disclosure { margin-top: 24px; min-height: 0; padding: 0; font-size: 15px; line-height: 24px; font-weight: 500; color: var(--text); }
+.add .disclosure::before { content: "+\00a0"; color: var(--secondary); }
+.add .disclosure[aria-expanded="true"]::before { content: "\2013\00a0"; }
+.setup { margin-top: 12px; padding: 16px 0 8px 16px; border-left: 2px solid var(--rule); }
+.setup .follow { margin-top: 0; }
+.setup .block + .status + .follow, .setup .block + .follow { margin-top: 16px; }
+.block { position: relative; overflow: hidden; margin: 12px 0 0; border-radius: 10px; background: var(--block); }
 .block-command, .block-text { margin: 0; color: var(--text); user-select: text; overflow-wrap: anywhere; }
-.block-command { padding: 16px; font: 400 13px/1.625 var(--mono); color: var(--command); white-space: pre; overflow-x: auto; scrollbar-width: none; }
+.block-command { padding: 14px 16px; font: 400 13px/1.625 var(--mono); color: var(--command); white-space: pre; overflow-x: auto; scrollbar-width: none; }
 .block-command::-webkit-scrollbar { display: none; }
-.block-text { padding: 16px 48px 16px 16px; font: 400 13px/20px var(--mono); white-space: pre-wrap; }
+.block-text { padding: 14px 48px 14px 16px; font: 400 13px/20px var(--mono); white-space: pre-wrap; }
 .block-command:focus, .block-text:focus { outline: none; box-shadow: none; }
-.copy {
-  position: absolute; top: 12px; right: 12px;
-  width: 28px; height: 28px; min-height: 0; padding: 6px; margin: 0;
-  border: 0; border-radius: 6px; background: transparent; color: var(--faint);
-  opacity: 0; transition: opacity 150ms cubic-bezier(.4, 0, .2, 1);
-  cursor: pointer;
-}
+.copy { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; min-height: 0; padding: 6px; margin: 0; border: 0; border-radius: 6px; background: transparent; color: var(--faint); opacity: 0; transition: opacity 150ms cubic-bezier(.4, 0, .2, 1); cursor: pointer; }
 .copy::before { content: ""; position: absolute; inset: -8px; }
 .block:hover .copy, .copy:focus-visible, .copy.copied { opacity: 1; }
 .copy:hover { background: var(--copy-hover); color: var(--copy-hover-icon); }
 .copy.copied .icon { animation: icon-in 150ms cubic-bezier(.4, 0, .2, 1); }
 @keyframes icon-in { from { opacity: 0; transform: scale(.5); filter: blur(4px); } }
-@media (hover: none) {
-  .copy { opacity: 1; }
-  /* Accepted departure from the contract: with the control visible at rest, a scrolling command
-     would still run under it at any scroll position, so on no-hover devices the command wraps instead. */
-  .block-command { padding-right: 48px; white-space: pre-wrap; overflow-wrap: anywhere; }
-}
+@media (hover: none) { .copy { opacity: 1; } .block-command { padding-right: 48px; white-space: pre-wrap; overflow-wrap: anywhere; } }
 @media (prefers-reduced-motion: reduce) { .copy { transition: none; } .copy.copied .icon { animation: none; } }
-.save .status { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--secondary); }
-.save .status:empty { display: none; }
+.share .status { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--secondary); }
+.share .status:empty { display: none; }
+.icon { display: inline-flex; line-height: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.colophon { margin-top: 112px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 20px; color: var(--secondary); }
+.colophon-link, .inline-link { color: var(--text); text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.inline-link:hover { text-decoration-color: currentColor; }
 h1:focus-visible, h2:focus-visible { box-shadow: none; }
 @media (max-width: 600px) {
-  body.recipient .shell { width: 100%; padding: 64px 24px; }
-  .save h1 { font-size: 30px; line-height: 36px; letter-spacing: -0.025em; }
+  body.recipient .shell { padding: 32px 20px 72px; }
+  body.recipient .identity { margin-bottom: 40px; }
+  .share h1 { font-size: 34px; line-height: 40px; }
+  .source, .add { margin-top: 56px; }
+  .colophon { margin-top: 80px; }
+  .brief-text { font-size: 18px; line-height: 29px; }
+  .cta { width: 100%; }
   button.copy { width: 28px; }
 }

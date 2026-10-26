@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { preparePackage, readPackage, ShareError, noSymlinks, MAX_BYTES } from './sharing/package.mjs';
 import { createSharingServer } from './sharing/server.mjs';
 import { importSelection } from './sharing/import.mjs';
 import { createRelay } from './sharing/relay.mjs';
+import os from 'node:os';
+import { renderShareHtml, exportFilename } from './sharing/export.mjs';
 import { readPrivateJSON, removePrivateFile } from './sharing/storage.mjs';
 
 export const usage = `Engram sharing (local, no email sent by default)
 
   node bin/engram-sharing.mjs prepare --manifest <reviewed.json> --root <originals-dir>
-  node bin/engram-sharing.mjs serve [--prepared <package.json>] [--port 4318]
+  node bin/engram-sharing.mjs export [--prepared <package.json>] [--out <file.html>]   (default: ~/Desktop/<title>.html)
+  node bin/engram-sharing.mjs serve [--prepared <package.json>] [--port 4318]   (archived link path)
   node bin/engram-sharing.mjs import --url <share-url> --target <engram-dir> [--init]
   node bin/engram-sharing.mjs import --package <download.json> --target <engram-dir> [--init]
   node bin/engram-sharing.mjs serve --demo [--port 4318]
@@ -26,7 +30,7 @@ An importer result is a save receipt and discussion handoff; My take requires yo
 `;
 function options(args) {
   const result = {};
-  const allowed = new Set(['manifest', 'root', 'prepared', 'port', 'url', 'target', 'package', 'state', 'public-url', 'init', 'demo', 'delivery', 'local-setup', 'wait-ms', 'receipt']);
+  const allowed = new Set(['manifest', 'root', 'prepared', 'port', 'url', 'target', 'package', 'state', 'public-url', 'init', 'demo', 'delivery', 'local-setup', 'wait-ms', 'receipt', 'out']);
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (!arg.startsWith('--') || !allowed.has(arg.slice(2))) throw new ShareError('Unknown sharing option. Use --help.');
@@ -44,6 +48,13 @@ async function demoSelection(stateDir) {
   const content = 'Project Checkpoints\n\nA synthetic project team keeps a checkpoint after each experiment. Each checkpoint records the question, observation, decision, and next check. Decisions name the evidence used and any unresolved uncertainty.\n\nThis fixture demonstrates sharing only. It is not a report about a real project.\n';
   try { await fs.writeFile(filename, content, { flag: 'wx', mode: 0o600 }); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   return preparePackage({ version: 1, title: 'Project Checkpoints', sender: 'Demo sender', author: 'Synthetic fixture', previewReviewed: true, preview: 'A synthetic project team uses a checkpoint after each experiment to keep its question, observation, decision, and next check together. Each decision names its evidence and the uncertainty that remains.', senderThoughts: 'I would like to try this format at our next checkpoint. This is a synthetic sender thought.', files: [{ path: 'Project Checkpoints.txt' }] }, root);
+}
+// The file is for sending, so it lands where the person can see it: the Desktop when there is one.
+export function defaultExportPath(title, stateDir, home = os.homedir()) {
+  const desktop = path.join(home, 'Desktop');
+  let directory = stateDir ? path.join(stateDir, 'export') : desktop;
+  try { if (fsSync.statSync(desktop).isDirectory()) directory = desktop; } catch { /* no Desktop: keep the private export folder */ }
+  return path.join(directory, exportFilename(title));
 }
 export async function runSharing(args = process.argv.slice(2)) {
   if (!args.length || args.includes('--help') || args.includes('-h')) { console.log(usage); return; }
@@ -85,7 +96,17 @@ export async function runSharing(args = process.argv.slice(2)) {
     const filename = path.join(stateDir, 'prepared.json');
     await noSymlinks(filename, { allowMissing: true });
     await fs.writeFile(filename, JSON.stringify(selection, null, 2), { mode: 0o600 });
-    console.log('Prepared the explicit reviewed selection in .local runtime storage. Run the sharing server to review it.'); return;
+    console.log('Prepared the explicit reviewed selection in .local runtime storage. Run export to write the file to send.'); return;
+  }
+  if (command === 'export') {
+    const prepared = await readPackage(flags.prepared ?? path.join(stateDir, 'prepared.json'));
+    const out = path.resolve(flags.out ?? defaultExportPath(prepared.title, stateDir));
+    await noSymlinks(out, { allowMissing: true });
+    await fs.mkdir(path.dirname(out), { recursive: true, mode: 0o700 });
+    await fs.writeFile(out, await renderShareHtml(prepared, { fileName: path.basename(out) }), { mode: 0o600 });
+    console.log(`Wrote ${out}`);
+    console.log('Send that one file. It carries the clip, the original, and the save instructions; no link, server or email is needed.');
+    return;
   }
   if (command === 'serve') {
     const prepared = flags.demo ? await demoSelection(stateDir) : await readPackage(flags.prepared ?? path.join(stateDir, 'prepared.json'));

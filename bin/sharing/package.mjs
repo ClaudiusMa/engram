@@ -75,5 +75,8 @@ export async function readPackage(filename) {
   await noSymlinks(filename);
   const stat = await fs.stat(filename);
   if (!stat.isFile() || stat.size > MAX_BYTES) throw new ShareError('Package is too large or unavailable.');
-  return validatePackage(JSON.parse(await fs.readFile(filename, 'utf8')));
+  let parsed;
+  try { parsed = JSON.parse(await fs.readFile(filename, 'utf8')); }
+  catch { throw new ShareError('This file is not an Engram package. Pass the share .html file or the engram-selection.json it contains.'); }
+  return validatePackage(parsed);
 }
